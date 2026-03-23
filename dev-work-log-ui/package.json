@@ -1,0 +1,28 @@
+{
+  "name": "dev-work-log-ui",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@vuepic/vue-datepicker": "^12.1.0",
+    "axios": "^1.13.6",
+    "dayjs": "^1.11.20",
+    "echarts": "^6.0.0",
+    "pinia": "^3.0.4",
+    "vue": "^3.5.12",
+    "vue-router": "^5.0.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.2.2",
+    "@vitejs/plugin-vue": "^5.1.4",
+    "autoprefixer": "^10.4.27",
+    "postcss": "^8.5.8",
+    "tailwindcss": "^4.2.2",
+    "vite": "^5.4.10"
+  }
+}

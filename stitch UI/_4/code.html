@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>研发工作台账 - 每日日志</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-primary": "#ffffff",
+                        "on-primary-container": "#cadcff",
+                        "on-surface": "#1b1c1c",
+                        "background": "#fbf9f8",
+                        "on-error-container": "#93000a",
+                        "surface-tint": "#005db5",
+                        "on-tertiary-fixed-variant": "#005046",
+                        "secondary-fixed-dim": "#afcae2",
+                        "inverse-on-surface": "#f2f0f0",
+                        "tertiary-fixed-dim": "#83d5c5",
+                        "on-secondary-fixed-variant": "#30495d",
+                        "error": "#ba1a1a",
+                        "on-background": "#1b1c1c",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-low": "#f5f3f3",
+                        "primary": "#00488d",
+                        "on-tertiary-container": "#97ead9",
+                        "on-tertiary": "#ffffff",
+                        "secondary": "#486176",
+                        "on-secondary-fixed": "#001e30",
+                        "surface-container-high": "#e9e8e7",
+                        "inverse-surface": "#303030",
+                        "secondary-container": "#cbe6ff",
+                        "primary-fixed-dim": "#a8c8ff",
+                        "surface-container": "#efeded",
+                        "on-error": "#ffffff",
+                        "surface-container-highest": "#e4e2e2",
+                        "tertiary-container": "#036c5f",
+                        "on-primary-fixed": "#001b3d",
+                        "outline": "#727783",
+                        "surface-variant": "#e4e2e2",
+                        "on-secondary": "#ffffff",
+                        "outline-variant": "#c2c6d4",
+                        "primary-container": "#005fb8",
+                        "surface-dim": "#dbdad9",
+                        "tertiary-fixed": "#9ff2e1",
+                        "on-surface-variant": "#424752",
+                        "on-tertiary-fixed": "#00201b",
+                        "inverse-primary": "#a8c8ff",
+                        "on-primary-fixed-variant": "#00468b",
+                        "tertiary": "#005247",
+                        "error-container": "#ffdad6",
+                        "secondary-fixed": "#cbe6ff",
+                        "on-secondary-container": "#4e677c",
+                        "surface-bright": "#fbf9f8",
+                        "primary-fixed": "#d6e3ff",
+                        "surface": "#fbf9f8"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+    </style>
+</head>
+<body class="bg-background font-body text-on-background min-h-screen">
+<!-- SideNavBar (Shared Component) -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-[#f5f3f3] dark:bg-slate-900 flex flex-col p-4 space-y-2 z-40">
+<div class="px-2 py-6 mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center text-white">
+<span class="material-symbols-outlined" data-icon="terminal">terminal</span>
+</div>
+<div>
+<h2 class="font-manrope font-bold text-[#00488d] dark:text-blue-400 text-lg leading-tight">研发管理终端</h2>
+<p class="text-[10px] text-slate-500 tracking-widest uppercase">Enterprise Edition</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-[#00488d] hover:bg-[#dbdad9] dark:hover:bg-slate-800 transition-all duration-200 rounded-lg group hover:translate-x-1" href="#">
+<span class="font-manrope text-sm tracking-tight">汇总看板</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-800 text-[#00488d] dark:text-blue-400 font-semibold rounded-lg shadow-sm translate-x-1 transition-transform" href="#">
+<span class="font-manrope text-sm tracking-tight">工作登记</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-[#00488d] hover:bg-[#dbdad9] dark:hover:bg-slate-800 transition-all duration-200 rounded-lg group hover:translate-x-1" href="#">
+<span class="font-manrope text-sm tracking-tight">员工管理</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-[#00488d] hover:bg-[#dbdad9] dark:hover:bg-slate-800 transition-all duration-200 rounded-lg group hover:translate-x-1" href="#">
+<span class="font-manrope text-sm tracking-tight">工作日志</span>
+</a>
+</nav>
+<div class="pt-4 mt-auto space-y-1">
+<button class="w-full mb-4 py-3 px-4 bg-gradient-to-br from-primary to-primary-container text-white rounded-lg font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary/10 active:scale-95 transition-transform hover:translate-x-1">
+<span class="font-manrope text-sm">新建日志</span>
+</button>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-[#00488d] hover:bg-[#dbdad9] transition-all rounded-lg hover:translate-x-1" href="#">
+<span class="font-manrope text-sm tracking-tight">个人中心</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-[#00488d] hover:bg-[#dbdad9] transition-all rounded-lg hover:translate-x-1" href="#">
+<span class="font-manrope text-sm tracking-tight">安全退出</span>
+</a>
+</div>
+</aside>
+<!-- TopAppBar (Shared Component) -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 flex justify-between items-center px-8 z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800/50 shadow-sm dark:shadow-none">
+<div class="flex items-center gap-4">
+<span class="text-2xl font-black text-[#00488d] dark:text-white font-manrope">研发工作台账</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative hidden lg:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+<input class="pl-10 pr-4 py-1.5 bg-surface-container-low border-none rounded-full text-sm focus:ring-2 focus:ring-primary/20 w-64 transition-all" placeholder="搜索日志..." type="text"/>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-slate-500 hover:opacity-80 cursor-pointer active:opacity-60 transition-opacity" data-icon="notifications">notifications</button>
+<button class="material-symbols-outlined text-slate-500 hover:opacity-80 cursor-pointer active:opacity-60 transition-opacity" data-icon="settings">settings</button>
+<button class="material-symbols-outlined text-slate-500 hover:opacity-80 cursor-pointer active:opacity-60 transition-opacity" data-icon="help">help</button>
+<div class="h-8 w-8 rounded-full overflow-hidden border-2 border-primary/10">
+<img alt="User Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCqUMyIKhMuKSp1cVvnem4e_r9WdIxpnR5ptlcVuEvFRlX77ywh4DX7vtkzMLpPW5WqG5z0WjFRloJgjCKdYLMJ4TLguHY6C5AjazvjGVRL46TCSV1HvBmgo_RfxRrsgU4ZnD-5SNXqZjK9ahVgLjoBt1-6wJUhDiDpMt4q6OfQ-3h68noOpndtkgilakal7FMPGqOzM4W45w8tjAoYNPCPySYicEVPo013nxVu9LSIS0jq6pAsHCvD4zlelKgH-li3ONiH0UG8uaPL"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 pt-24 pb-12 px-12">
+<div class="max-w-6xl mx-auto">
+<!-- Header Section: Editorial Style -->
+<div class="mb-12">
+<h2 class="font-headline text-5xl font-extrabold tracking-tight text-primary mb-2">每日工作登记.</h2>
+<p class="font-body text-on-surface-variant text-lg max-w-2xl">为卓越研发进行精准记录。以严谨的架构清晰记录您的日常贡献。</p>
+</div>
+<!-- Bento Layout Container -->
+<div class="grid grid-cols-12 gap-8">
+<!-- Left Column: Pre-filled Info -->
+<div class="col-span-12 lg:col-span-4 space-y-6">
+<div class="p-8 rounded-xl bg-surface-container-low border-none shadow-sm flex flex-col gap-6">
+<div>
+<span class="font-label text-[10px] font-bold uppercase tracking-[0.15em] text-outline mb-2 block">填报日期</span>
+<p class="font-headline text-2xl font-bold text-on-surface">2023年10月24日</p>
+</div>
+<div class="h-px bg-outline-variant/20"></div>
+<div>
+<span class="font-label text-[10px] font-bold uppercase tracking-[0.15em] text-outline mb-2 block">员工详情</span>
+<p class="font-body text-base font-semibold text-on-surface">Alex Thompson</p>
+<p class="font-body text-sm text-on-surface-variant">核心架构组</p>
+</div>
+<div class="mt-4 p-4 rounded-lg bg-primary/5 border border-primary/10">
+<div class="flex items-center gap-2 text-primary mb-2">
+<span class="material-symbols-outlined text-base">info</span>
+<span class="text-xs font-bold uppercase tracking-wider">填报规范</span>
+</div>
+<ul class="text-[11px] space-y-2 text-on-surface-variant leading-relaxed">
+<li class="flex gap-2"><span>•</span> 每日建议总工时：8.0h - 10.0h</li>
+<li class="flex gap-2"><span>•</span> 每日填报条目建议不超过5条</li>
+<li class="flex gap-2"><span>•</span> 最小单位：0.5h</li>
+</ul>
+</div>
+</div>
+<!-- Summary Card (Tonal Layering) -->
+<div class="p-8 rounded-xl bg-primary text-on-primary shadow-xl">
+<div class="flex justify-between items-start mb-6">
+<span class="material-symbols-outlined text-3xl">analytics</span>
+<span class="px-2 py-1 bg-white/20 rounded text-[10px] font-bold tracking-widest uppercase">实时总计</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="text-5xl font-black font-manrope">8.5</span>
+<span class="text-xl font-medium opacity-70">小时</span>
+</div>
+<div class="mt-4 h-1.5 w-full bg-white/20 rounded-full overflow-hidden">
+<div class="h-full bg-white w-[85%]"></div>
+</div>
+</div>
+</div>
+<!-- Right Column: Interactive Log Forms -->
+<div class="col-span-12 lg:col-span-8 space-y-6">
+<!-- Entry Card 1 -->
+<div class="relative p-8 rounded-xl bg-surface-container-lowest shadow-[0_12px_32px_rgba(0,72,141,0.06)] overflow-hidden">
+<div class="absolute top-0 left-0 w-1.5 h-full bg-primary"></div>
+<div class="flex justify-between items-center mb-8">
+<div class="flex items-center gap-3">
+<span class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-xs">01</span>
+<h3 class="font-headline text-xl font-bold">工作项</h3>
+<span class="ml-2 px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded uppercase tracking-wider">仅当日可编辑/移除</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-primary hover:bg-primary/5 transition-colors font-bold text-xs">
+<span class="material-symbols-outlined text-sm">edit</span>
+                                    编辑
+                                </button>
+<div class="w-px h-4 bg-outline-variant/30 mx-1"></div>
+<button class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-error hover:bg-error/5 transition-colors font-bold text-xs">
+<span class="material-symbols-outlined text-sm">delete</span>
+                                    移除
+                                </button>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-6 mb-6">
+<div class="space-y-2">
+<label class="font-label text-[10px] font-bold uppercase tracking-widest text-outline">关联产品</label>
+<select class="w-full bg-surface-container-low border-none rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 appearance-none font-medium">
+<option>内部信息化</option>
+<option>预售营销</option>
+<option>溯源营销</option>
+<option>会展信息化</option>
+<option>其他（PPT、项目申报等）</option>
+</select>
+</div>
+<div class="space-y-2">
+<label class="font-label text-[10px] font-bold uppercase tracking-widest text-outline">任务类别</label>
+<select class="w-full bg-surface-container-low border-none rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 appearance-none font-medium">
+<option>需求开发</option>
+<option>需求对接</option>
+<option>Bug修复</option>
+<option>测试部署</option>
+<option>其他</option>
+</select>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-6 mb-6">
+<div class="space-y-2">
+<label class="font-label text-[10px] font-bold uppercase tracking-widest text-outline">投入工时</label>
+<div class="relative">
+<input class="w-full bg-surface-container-low border-none rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 font-bold" step="0.5" type="number" value="5.5"/>
+<span class="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-primary">H</span>
+</div>
+</div>
+<div class="space-y-2">
+<label class="font-label text-[10px] font-bold uppercase tracking-widest text-outline">产出物状态</label>
+<select class="w-full bg-surface-container-low border-none rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 appearance-none font-medium">
+<option>进行中</option>
+<option>已提测</option>
+<option>已挂起</option>
+<option>已完成</option>
+</select>
+</div>
+</div>
+<div class="space-y-2">
+<label class="font-label text-[10px] font-bold uppercase tracking-widest text-outline">产出物描述</label>
+<textarea class="w-full bg-surface-container-low border-none rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 placeholder:text-slate-400" placeholder="[模块/功能名] + [动作/结果]" rows="3">核心账本API + 开发完成每日日志检索接口；完成错误处理状态的单元测试。</textarea>
+</div>
+</div>
+<!-- Entry Card 2 -->
+<div class="relative p-8 rounded-xl bg-surface-container-low/50 border border-outline-variant/10">
+<div class="flex justify-between items-center mb-8">
+<div class="flex items-center gap-3">
+<span class="w-8 h-8 rounded-full bg-slate-300 text-on-surface flex items-center justify-center font-bold text-xs">02</span>
+<h3 class="font-headline text-xl font-bold text-on-surface/60">工作项</h3>
+<span class="ml-2 px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded uppercase tracking-wider">仅当日可编辑/移除</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-primary/60 hover:bg-primary/5 transition-colors font-bold text-xs">
+<span class="material-symbols-outlined text-sm">edit</span>
+                                    编辑
+                                </button>
+<div class="w-px h-4 bg-outline-variant/30 mx-1"></div>
+<button class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-error/60 hover:bg-error/5 transition-colors font-bold text-xs">
+<span class="material-symbols-outlined text-sm">delete</span>
+                                    移除
+                                </button>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-6 mb-6">
+<div class="space-y-2">
+<label class="font-label text-[10px] font-bold uppercase tracking-widest text-outline">关联产品</label>
+<select class="w-full bg-surface-container-lowest border-none rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 appearance-none font-medium">
+<option>溯源营销</option>
+</select>
+</div>
+<div class="space-y-2">
+<label class="font-label text-[10px] font-bold uppercase tracking-widest text-outline">任务类别</label>
+<select class="w-full bg-surface-container-lowest border-none rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 appearance-none font-medium">
+<option>Bug修复</option>
+</select>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-6 mb-6">
+<div class="space-y-2">
+<label class="font-label text-[10px] font-bold uppercase tracking-widest text-outline">投入工时</label>
+<input class="w-full bg-surface-container-lowest border-none rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 font-bold" step="0.5" type="number" value="3.0"/>
+</div>
+<div class="space-y-2">
+<label class="font-label text-[10px] font-bold uppercase tracking-widest text-outline">产出物状态</label>
+<select class="w-full bg-surface-container-lowest border-none rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 appearance-none font-medium">
+<option>已完成</option>
+</select>
+</div>
+</div>
+<div class="space-y-2">
+<label class="font-label text-[10px] font-bold uppercase tracking-widest text-outline">产出物描述</label>
+<textarea class="w-full bg-surface-container-lowest border-none rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 placeholder:text-slate-400" placeholder="[模块/功能名] + [动作/结果]" rows="3">库存追踪器 + 修复仪表盘加载时的空指针异常；已在预发布服务器验证。</textarea>
+</div>
+</div>
+<!-- Action Row -->
+<div class="flex justify-between items-center py-6">
+<button class="flex items-center gap-2 px-6 py-3 rounded-lg border-2 border-dashed border-outline-variant text-outline hover:border-primary hover:text-primary transition-all font-bold text-sm">
+<span class="material-symbols-outlined">add_circle</span>
+                            添加工作项 (2/5)
+                        </button>
+<div class="flex gap-4">
+<button class="px-8 py-3 rounded-lg text-primary font-bold text-sm hover:bg-surface-container-high transition-colors">
+                                保存草稿
+                            </button>
+<button class="px-10 py-3 rounded-lg bg-gradient-to-br from-primary to-primary-container text-on-primary font-bold text-sm shadow-lg shadow-primary/20 active:scale-95 transition-all">
+                                提交当日日志
+                            </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Meta -->
+<footer class="mt-20 pt-8 border-t border-outline-variant/10 flex justify-between items-center opacity-40 grayscale hover:opacity-100 transition-opacity duration-500">
+<div class="flex gap-8">
+<span class="font-label text-[10px] font-bold uppercase tracking-widest">符合 ISO 27001 标准</span>
+<span class="font-label text-[10px] font-bold uppercase tracking-widest">端到端加密</span>
+<span class="font-label text-[10px] font-bold uppercase tracking-widest">自动化审计追踪</span>
+</div>
+<p class="font-label text-[10px] font-bold uppercase tracking-widest">© 2023 研发企业系统</p>
+</footer>
+</div>
+</main>
+</body></html>

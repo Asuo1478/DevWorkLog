@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-bright": "#fbf9f8",
+              "inverse-surface": "#303030",
+              "on-primary-fixed-variant": "#00468b",
+              "on-tertiary-fixed": "#00201b",
+              "surface-tint": "#005db5",
+              "surface-container": "#efeded",
+              "secondary-fixed": "#cbe6ff",
+              "on-tertiary": "#ffffff",
+              "on-primary": "#ffffff",
+              "surface-container-high": "#e9e8e7",
+              "on-primary-container": "#cadcff",
+              "tertiary-fixed-dim": "#83d5c5",
+              "on-secondary": "#ffffff",
+              "on-secondary-container": "#4e677c",
+              "tertiary-fixed": "#9ff2e1",
+              "surface-dim": "#dbdad9",
+              "on-tertiary-container": "#97ead9",
+              "error-container": "#ffdad6",
+              "primary-fixed": "#d6e3ff",
+              "secondary-container": "#cbe6ff",
+              "outline": "#727783",
+              "tertiary": "#005247",
+              "on-error-container": "#93000a",
+              "error": "#ba1a1a",
+              "surface": "#fbf9f8",
+              "on-error": "#ffffff",
+              "tertiary-container": "#036c5f",
+              "primary-container": "#005fb8",
+              "on-secondary-fixed": "#001e30",
+              "secondary": "#486176",
+              "surface-container-low": "#f5f3f3",
+              "inverse-on-surface": "#f2f0f0",
+              "on-surface-variant": "#424752",
+              "on-primary-fixed": "#001b3d",
+              "secondary-fixed-dim": "#afcae2",
+              "primary": "#00488d",
+              "outline-variant": "#c2c6d4",
+              "on-tertiary-fixed-variant": "#005046",
+              "on-secondary-fixed-variant": "#30495d",
+              "surface-container-highest": "#e4e2e2",
+              "primary-fixed-dim": "#a8c8ff",
+              "on-surface": "#1b1c1c",
+              "surface-container-lowest": "#ffffff",
+              "on-background": "#1b1c1c",
+              "background": "#fbf9f8",
+              "inverse-primary": "#a8c8ff",
+              "surface-variant": "#e4e2e2"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .font-manrope { font-family: 'Manrope', sans-serif; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface flex min-h-screen">
+<!-- SideNavBar from {{DATA:COMPONENTS:COMPONENTS_23}} -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-[#f5f3f3] dark:bg-slate-900 flex flex-col p-4 space-y-2 z-50">
+<div class="flex items-center gap-3 px-2 py-6 mb-4">
+<div class="w-10 h-10 bg-primary-container rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-white" data-icon="architecture">architecture</span>
+</div>
+<div>
+<h1 class="font-manrope font-bold text-[#00488d] dark:text-blue-400 text-lg leading-tight">研发管理终端</h1>
+<p class="text-[10px] text-on-surface-variant opacity-70 tracking-widest uppercase">Enterprise Edition</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-[#00488d] hover:bg-[#dbdad9] dark:hover:bg-slate-800 transition-all duration-200 rounded-lg group hover:translate-x-1" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-manrope text-sm tracking-tight">汇总看板</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-[#00488d] hover:bg-[#dbdad9] dark:hover:bg-slate-800 transition-all duration-200 rounded-lg group hover:translate-x-1" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span class="font-manrope text-sm tracking-tight">工作日志</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-[#00488d] hover:bg-[#dbdad9] dark:hover:bg-slate-800 transition-all duration-200 rounded-lg group hover:translate-x-1" href="#">
+<span class="material-symbols-outlined" data-icon="edit_note">edit_note</span>
+<span class="font-manrope text-sm tracking-tight">工作登记</span>
+</a>
+<!-- Active State: 员工管理 -->
+<a class="flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-800 text-[#00488d] dark:text-blue-400 font-semibold rounded-lg shadow-sm transition-transform translate-x-1" href="#">
+<span class="material-symbols-outlined" data-icon="group" style="font-variation-settings: 'FILL' 1;">group</span>
+<span class="font-manrope text-sm tracking-tight">员工管理</span>
+</a>
+</nav>
+<div class="mt-auto pt-4 space-y-1">
+<button class="w-full flex items-center justify-center gap-2 py-3 mb-4 bg-gradient-to-br from-primary to-primary-container text-white rounded-lg font-semibold shadow-lg hover:opacity-90 transition-opacity active:opacity-80">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+<span class="font-manrope text-sm">新建日志</span>
+</button>
+<div class="h-[1px] bg-surface-dim mb-4 opacity-30"></div>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-[#00488d] hover:bg-[#dbdad9] dark:hover:bg-slate-800 transition-all rounded-lg hover:translate-x-1" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-manrope text-sm tracking-tight">个人中心</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-[#00488d] hover:bg-[#dbdad9] dark:hover:bg-slate-800 transition-all rounded-lg hover:translate-x-1" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span class="font-manrope text-sm tracking-tight">安全退出</span>
+</a>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 ml-64 min-h-screen">
+<!-- TopAppBar -->
+<header class="w-full sticky top-0 z-40 bg-[#fbf9f8] dark:bg-slate-950 flex justify-between items-center px-8 py-4">
+<div class="flex items-center gap-4">
+<h2 class="font-manrope text-2xl font-bold text-[#00488d] dark:text-blue-400">员工管理</h2>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative hidden lg:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-sm" data-icon="search">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-lowest border-none rounded-lg text-sm w-64 focus:ring-2 focus:ring-primary/20 transition-all shadow-sm" placeholder="搜索员工、工号或小组..." type="text"/>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-on-surface-variant hover:bg-[#f5f3f3] rounded-full transition-colors active:scale-95">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-[#f5f3f3] rounded-full transition-colors active:scale-95">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+</button>
+<div class="h-8 w-[1px] bg-surface-dim opacity-30 mx-2"></div>
+<img alt="User Avatar" class="w-9 h-9 rounded-full object-cover border-2 border-white shadow-sm" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDFnnuUKZaUwfsembMzhMy1t_mAemt3qM_GvRLTuLa3ue0OGuexPVcASBR6fd5fFnYdy0LMzL_7cc_MXov6oeEfrmrRODFSyJQ_cwhlzF0Jb4ZYikaxFO2sbK7Qca3EjTRTXcAlnso8P5KETrIEXURnTY114iLKeP_E6Eui7c-3jfb4R8jvBoqF5s6s5_j26BLUg0uTgEAe-Gj63nyVjPt_hYb6NJvTMswlx1u9IjiyTLI9kvXrZyqU2AoUO7Nqhk_bXRid8UNOmC25"/>
+</div>
+</div>
+</header>
+<div class="p-8 max-w-7xl mx-auto space-y-10">
+<!-- Data Overview: Bento Grid -->
+<section class="grid grid-cols-1 md:grid-cols-4 gap-6">
+<div class="md:col-span-1 bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-outline-variant/10">
+<p class="text-label text-on-surface-variant uppercase tracking-wider font-bold text-[11px] mb-2">团队总人数</p>
+<div class="flex items-baseline gap-2">
+<span class="font-manrope text-4xl font-extrabold text-primary">128</span>
+<span class="text-tertiary font-bold text-sm">+4%</span>
+</div>
+<div class="mt-4 h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary w-full"></div>
+</div>
+</div>
+<div class="md:col-span-3 bg-surface-container-low p-6 rounded-xl flex flex-col md:flex-row gap-8 items-center">
+<div class="flex-1 space-y-4 w-full">
+<p class="text-label text-on-surface-variant uppercase tracking-wider font-bold text-[11px]">小组分配比例</p>
+<div class="flex gap-2 h-8 w-full rounded-lg overflow-hidden shadow-inner">
+<div class="bg-[#00488d] w-[45%] flex items-center justify-center text-[10px] text-white font-bold">后端 45%</div>
+<div class="bg-[#005fb8] w-[35%] flex items-center justify-center text-[10px] text-white font-bold">前端 35%</div>
+<div class="bg-[#83d5c5] w-[20%] flex items-center justify-center text-[10px] text-on-tertiary-container font-bold">测试 20%</div>
+</div>
+<div class="flex gap-6 pt-2">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-sm bg-[#00488d]"></span>
+<span class="text-xs font-medium text-on-surface-variant">后端研发 (58)</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-sm bg-[#005fb8]"></span>
+<span class="text-xs font-medium text-on-surface-variant">前端开发 (45)</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-sm bg-[#83d5c5]"></span>
+<span class="text-xs font-medium text-on-surface-variant">测试保障 (25)</span>
+</div>
+</div>
+</div>
+<div class="hidden lg:block w-px h-16 bg-outline-variant opacity-20"></div>
+<button class="bg-surface-container-lowest px-6 py-4 rounded-lg flex items-center gap-3 group hover:bg-white transition-all shadow-sm">
+<span class="material-symbols-outlined text-primary" data-icon="add_circle">add_circle</span>
+<div class="text-left">
+<p class="text-sm font-bold text-primary">添加新员工</p>
+<p class="text-[10px] text-on-surface-variant opacity-60">快速录入成员档案</p>
+</div>
+</button>
+</div>
+</section>
+<!-- Employee List: Ledger Style -->
+<section class="space-y-6">
+<div class="flex justify-between items-end">
+<div>
+<h3 class="font-manrope text-xl font-bold text-on-surface">人员档案库</h3>
+<p class="text-sm text-on-surface-variant opacity-70">管理团队成员身份、角色及实时状态</p>
+</div>
+<div class="flex gap-2">
+<button class="p-2 bg-surface-container-high rounded-lg hover:bg-surface-dim transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="filter_list">filter_list</span>
+</button>
+<button class="p-2 bg-surface-container-high rounded-lg hover:bg-surface-dim transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="download">download</span>
+</button>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm">
+<!-- Table Header -->
+<div class="grid grid-cols-12 px-8 py-4 bg-surface-container-low border-b border-outline-variant/10">
+<div class="col-span-4 text-label uppercase tracking-widest font-bold text-[10px] text-on-surface-variant">员工信息</div>
+<div class="col-span-2 text-label uppercase tracking-widest font-bold text-[10px] text-on-surface-variant text-center">登录账号/工号</div>
+<div class="col-span-2 text-label uppercase tracking-widest font-bold text-[10px] text-on-surface-variant">所属小组</div>
+<div class="col-span-2 text-label uppercase tracking-widest font-bold text-[10px] text-on-surface-variant">岗位角色</div>
+<div class="col-span-1 text-label uppercase tracking-widest font-bold text-[10px] text-on-surface-variant text-center">状态</div>
+<div class="col-span-1 text-label uppercase tracking-widest font-bold text-[10px] text-on-surface-variant text-right">操作</div>
+</div>
+<!-- List Items -->
+<div class="divide-y divide-surface-container">
+<!-- Row 1 -->
+<div class="grid grid-cols-12 px-8 py-5 items-center hover:bg-surface-container-low transition-colors group">
+<div class="col-span-4 flex items-center gap-4">
+<img alt="员工张明头像" class="w-10 h-10 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAuyKZyHm4iReSnpsVgsdeBcUTFrWIqB_WXrPbFcwD_eAKZZp6a7v3sgGPG77X7ehwhpwLRfbIlCAb6XSKMAIYHAkilzRT35IQHKvalzjhEuMn3Jc9NBzu7IC05Xs_KB9acUPTXUu1sokPMKIJOiu3O4hw90KUU4C4xChvXJst0_rMR99C2Lhv_IJ71fz30YY65T3YU4uj1y-BtdoE2cS5T1hns4oX5EIRvqU7AXa1_EJWqIx0TjOd-OAOR4C3k2ZliGbU9NnbUk6c1"/>
+<div>
+<p class="font-bold text-on-surface text-sm">张明</p>
+<p class="text-xs text-on-surface-variant opacity-60">zhang.ming@enterprise.com</p>
+</div>
+</div>
+<div class="col-span-2 text-center font-mono text-xs text-on-surface-variant">RD-20230104</div>
+<div class="col-span-2">
+<span class="px-2.5 py-1 bg-primary/10 text-primary text-[10px] font-bold rounded">后端研发组</span>
+</div>
+<div class="col-span-2 text-sm text-on-surface-variant">高级架构师</div>
+<div class="col-span-1 flex justify-center">
+<span class="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-tertiary-fixed-dim/20 text-on-tertiary-fixed-variant text-[10px] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span> 启用</span>
+</div>
+<div class="col-span-1 text-right">
+<button class="p-1.5 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Row 2 -->
+<div class="grid grid-cols-12 px-8 py-5 items-center hover:bg-surface-container-low transition-colors group">
+<div class="col-span-4 flex items-center gap-4">
+<img alt="员工李诗雅头像" class="w-10 h-10 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCuq1qd2DJ_3WRb7-3WW1Go7MdJi6y9UnOltKpfncFs82NV37EFEaVh9oR-pFbx6-RaC4f_FxNFPEytXhEmVnpwjWZ4Spxfs67TARJWxRc_EYilhrMv1wfM0lGhsBPGtzLqoc72YYQOM2uDrdO-mTg5iH49jaQ87G-dXxM-gaG7HyEEi9RfsrPYO-FShgerDwYcxAP_n1zpd5jEc1PneIl9WW-YFwHYagerwFZxEUqk81oBsSyr1AsR8nzK3g-aSvrrbNcMLOT9MO_F"/>
+<div>
+<p class="font-bold text-on-surface text-sm">李诗雅</p>
+<p class="text-xs text-on-surface-variant opacity-60">li.shiya@enterprise.com</p>
+</div>
+</div>
+<div class="col-span-2 text-center font-mono text-xs text-on-surface-variant">FE-20230215</div>
+<div class="col-span-2">
+<span class="px-2.5 py-1 bg-secondary-container text-on-secondary-container text-[10px] font-bold rounded">前端开发组</span>
+</div>
+<div class="col-span-2 text-sm text-on-surface-variant">资深交互开发</div>
+<div class="col-span-1 flex justify-center">
+<span class="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-surface-dim text-on-surface-variant text-[10px] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-outline"></span> 禁用</span>
+</div>
+<div class="col-span-1 text-right">
+<button class="p-1.5 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Row 3 -->
+<div class="grid grid-cols-12 px-8 py-5 items-center hover:bg-surface-container-low transition-colors group">
+<div class="col-span-4 flex items-center gap-4">
+<img alt="员工王伟头像" class="w-10 h-10 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7IeU2JQwV8Ief_L_71GG2sGhq9A1Zu3NH7FeKzrKa-w_m7IyCYcfizi03LJmNYYJF8jRHNhlk_RxVlPjJqdF3DV6mKFt4vjS9Et_9EylxQ4K9MtDVv0LlQG48jMKov4Yd_s5Z8mu63pFfHS_Fn4Yo8GRETv-Oq__q5hU51pr8M9INJQ4ghxk92W_xHoD7U85tyAGlsV0NgrfApvGE87Qs7yMu107sS5iV_CLBhXjbBtGI2N-92AUG0ELzJi3T0ARF3z2ZLECz7L2U"/>
+<div>
+<p class="font-bold text-on-surface text-sm">王伟</p>
+<p class="text-xs text-on-surface-variant opacity-60">wang.wei@enterprise.com</p>
+</div>
+</div>
+<div class="col-span-2 text-center font-mono text-xs text-on-surface-variant">QA-20230508</div>
+<div class="col-span-2">
+<span class="px-2.5 py-1 bg-tertiary-fixed text-on-tertiary-fixed-variant text-[10px] font-bold rounded">测试保障组</span>
+</div>
+<div class="col-span-2 text-sm text-on-surface-variant">自动化测试经理</div>
+<div class="col-span-1 flex justify-center">
+<span class="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-tertiary-fixed-dim/20 text-on-tertiary-fixed-variant text-[10px] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span> 启用</span>
+</div>
+<div class="col-span-1 text-right">
+<button class="p-1.5 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Row 4 -->
+<div class="grid grid-cols-12 px-8 py-5 items-center hover:bg-surface-container-low transition-colors group">
+<div class="col-span-4 flex items-center gap-4">
+<img alt="员工赵雅琪头像" class="w-10 h-10 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVjdE9yt-nJ978aSWcznnWhvS-_cod6qWJlhaTq1k3o4nHT_dBQ5-nsl5PHWD1b9s93o_attZzIflVjPUFHE30RHL4bRm38CvixaUIKkrfpstMfAJ7ito93yztfefS8vVz41NyfvsPXf2bqteyrSsFXOB-ByYlm3KlEyHvTNSLHmpm8GXFQEJxwzlBLsYzH4qi6fs-DFe4o8SLRH9PEhePrSn4gTv9snRaWzR6YmUKYTadPz4VmbfyA0eg3PmZgR6xkKjRCOkkoGS9"/>
+<div>
+<p class="font-bold text-on-surface text-sm">赵雅琪</p>
+<p class="text-xs text-on-surface-variant opacity-60">zhao.yaqi@enterprise.com</p>
+</div>
+</div>
+<div class="col-span-2 text-center font-mono text-xs text-on-surface-variant">RD-20230612</div>
+<div class="col-span-2">
+<span class="px-2.5 py-1 bg-primary/10 text-primary text-[10px] font-bold rounded">后端研发组</span>
+</div>
+<div class="col-span-2 text-sm text-on-surface-variant">Java开发工程师</div>
+<div class="col-span-1 flex justify-center">
+<span class="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-tertiary-fixed-dim/20 text-on-tertiary-fixed-variant text-[10px] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span> 启用</span>
+</div>
+<div class="col-span-1 text-right">
+<button class="p-1.5 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Table Footer / Pagination -->
+<div class="px-8 py-4 bg-surface-container-low flex justify-between items-center text-xs text-on-surface-variant border-t border-outline-variant/10">
+<p>显示 1 - 4 名员工，共 128 名</p>
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-1 opacity-50 cursor-not-allowed">
+<span class="material-symbols-outlined text-sm" data-icon="chevron_left">chevron_left</span> 上一页
+                        </button>
+<div class="flex gap-1">
+<span class="w-6 h-6 flex items-center justify-center bg-primary text-white rounded font-bold">1</span>
+<span class="w-6 h-6 flex items-center justify-center hover:bg-surface-dim rounded transition-colors cursor-pointer">2</span>
+<span class="w-6 h-6 flex items-center justify-center hover:bg-surface-dim rounded transition-colors cursor-pointer">3</span>
+</div>
+<button class="flex items-center gap-1 hover:text-primary transition-colors">
+                            下一页 <span class="material-symbols-outlined text-sm" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Floating FAB (Optional - Contextual Action) -->
+<button class="fixed bottom-8 right-8 w-14 h-14 bg-gradient-to-br from-primary to-primary-container text-white rounded-full shadow-2xl flex items-center justify-center active:scale-95 transition-transform group">
+<span class="material-symbols-outlined text-2xl" data-icon="person_add">person_add</span>
+<span class="absolute right-full mr-4 bg-inverse-surface text-inverse-on-surface text-[10px] font-bold px-3 py-1.5 rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">快速录入成员</span>
+</button>
+</main>
+</body></html>

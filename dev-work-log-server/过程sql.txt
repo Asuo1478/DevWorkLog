@@ -1,0 +1,90 @@
+好的，收到！以下是修正后的完整 SQL 方案（改用 BETWEEN AND，并补全管理员有结束日期的场景）：
+
+一、按关联产品统计
+非管理员（user_id = 4，仅选了开始日期 2026-03-20）
+sql
+SELECT b.avatar_char, b.name, a.log_date, a.product_type, SUM(a.work_hours) AS total_hours
+FROM dev_work_log a INNER JOIN sys_user b ON a.user_id = b.id 
+WHERE a.user_id = 4 AND a.log_date >= '2026-03-20'
+GROUP BY a.log_date, a.product_type 
+ORDER BY a.log_date DESC
+非管理员（user_id = 4，开始日期 2026-03-20，结束日期 2026-03-27）
+sql
+SELECT b.avatar_char, b.name, a.log_date, a.product_type, SUM(a.work_hours) AS total_hours
+FROM dev_work_log a INNER JOIN sys_user b ON a.user_id = b.id 
+WHERE a.user_id = 4 AND a.log_date BETWEEN '2026-03-20' AND '2026-03-27'
+GROUP BY a.log_date, a.product_type 
+ORDER BY a.log_date DESC
+管理员 jhtadmin（仅选了开始日期 2026-03-20）
+sql
+SELECT b.avatar_char, b.name, a.log_date, a.product_type, SUM(a.work_hours) AS total_hours
+FROM dev_work_log a INNER JOIN sys_user b ON a.user_id = b.id 
+WHERE a.log_date >= '2026-03-20'
+GROUP BY a.user_id, a.log_date, a.product_type
+ORDER BY a.user_id DESC
+管理员 jhtadmin（开始日期 2026-03-20，结束日期 2026-03-27）
+sql
+SELECT b.avatar_char, b.name, a.log_date, a.product_type, SUM(a.work_hours) AS total_hours
+FROM dev_work_log a INNER JOIN sys_user b ON a.user_id = b.id 
+WHERE a.log_date BETWEEN '2026-03-20' AND '2026-03-27'
+GROUP BY a.user_id, a.log_date, a.product_type
+ORDER BY a.user_id DESC
+二、按任务类别统计
+非管理员（user_id = 4，仅选了开始日期 2026-03-20）
+sql
+SELECT b.avatar_char, b.name, a.log_date, a.task_category, SUM(a.work_hours) AS total_hours
+FROM dev_work_log a INNER JOIN sys_user b ON a.user_id = b.id 
+WHERE a.user_id = 4 AND a.log_date >= '2026-03-20'
+GROUP BY a.log_date, a.task_category 
+ORDER BY a.log_date DESC
+非管理员（user_id = 4，开始日期 2026-03-20，结束日期 2026-03-27）
+sql
+SELECT b.avatar_char, b.name, a.log_date, a.task_category, SUM(a.work_hours) AS total_hours
+FROM dev_work_log a INNER JOIN sys_user b ON a.user_id = b.id 
+WHERE a.user_id = 4 AND a.log_date BETWEEN '2026-03-20' AND '2026-03-27'
+GROUP BY a.log_date, a.task_category 
+ORDER BY a.log_date DESC
+管理员 jhtadmin（仅选了开始日期 2026-03-20）
+sql
+SELECT b.avatar_char, b.name, a.log_date, a.task_category, SUM(a.work_hours) AS total_hours
+FROM dev_work_log a INNER JOIN sys_user b ON a.user_id = b.id 
+WHERE a.log_date >= '2026-03-20'
+GROUP BY a.user_id, a.log_date, a.task_category
+ORDER BY a.user_id DESC
+管理员 jhtadmin（开始日期 2026-03-20，结束日期 2026-03-27）
+sql
+SELECT b.avatar_char, b.name, a.log_date, a.task_category, SUM(a.work_hours) AS total_hours
+FROM dev_work_log a INNER JOIN sys_user b ON a.user_id = b.id 
+WHERE a.log_date BETWEEN '2026-03-20' AND '2026-03-27'
+GROUP BY a.user_id, a.log_date, a.task_category
+ORDER BY a.user_id DESC
+三、按单日耗时统计
+非管理员（user_id = 4，仅选了开始日期 2026-03-20）
+sql
+SELECT b.avatar_char, b.name, a.log_date, SUM(a.work_hours) AS total_hours
+FROM dev_work_log a INNER JOIN sys_user b ON a.user_id = b.id 
+WHERE a.user_id = 4 AND a.log_date >= '2026-03-20'
+GROUP BY a.log_date 
+ORDER BY a.log_date DESC
+非管理员（user_id = 4，开始日期 2026-03-20，结束日期 2026-03-27）
+sql
+SELECT b.avatar_char, b.name, a.log_date, SUM(a.work_hours) AS total_hours
+FROM dev_work_log a INNER JOIN sys_user b ON a.user_id = b.id 
+WHERE a.user_id = 4 AND a.log_date BETWEEN '2026-03-20' AND '2026-03-27'
+GROUP BY a.log_date 
+ORDER BY a.log_date DESC
+管理员 jhtadmin（仅选了开始日期 2026-03-20）
+sql
+SELECT b.avatar_char, b.name, a.log_date, SUM(a.work_hours) AS total_hours
+FROM dev_work_log a INNER JOIN sys_user b ON a.user_id = b.id 
+WHERE a.log_date >= '2026-03-20'
+GROUP BY a.user_id, a.log_date
+ORDER BY a.user_id DESC
+管理员 jhtadmin（开始日期 2026-03-20，结束日期 2026-03-27）
+sql
+SELECT b.avatar_char, b.name, a.log_date, SUM(a.work_hours) AS total_hours
+FROM dev_work_log a INNER JOIN sys_user b ON a.user_id = b.id 
+WHERE a.log_date BETWEEN '2026-03-20' AND '2026-03-27'
+GROUP BY a.user_id, a.log_date
+ORDER BY a.user_id DESC
+请您逐条确认以上12条 SQL 是否完全正确，确认后我立即严格按此逻辑重写后端和前端代码！

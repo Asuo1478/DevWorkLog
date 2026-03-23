@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-bright": "#fbf9f8",
+              "inverse-surface": "#303030",
+              "on-primary-fixed-variant": "#00468b",
+              "on-tertiary-fixed": "#00201b",
+              "surface-tint": "#005db5",
+              "surface-container": "#efeded",
+              "secondary-fixed": "#cbe6ff",
+              "on-tertiary": "#ffffff",
+              "on-primary": "#ffffff",
+              "surface-container-high": "#e9e8e7",
+              "on-primary-container": "#cadcff",
+              "tertiary-fixed-dim": "#83d5c5",
+              "on-secondary": "#ffffff",
+              "on-secondary-container": "#4e677c",
+              "tertiary-fixed": "#9ff2e1",
+              "surface-dim": "#dbdad9",
+              "on-tertiary-container": "#97ead9",
+              "error-container": "#ffdad6",
+              "primary-fixed": "#d6e3ff",
+              "secondary-container": "#cbe6ff",
+              "outline": "#727783",
+              "tertiary": "#005247",
+              "on-error-container": "#93000a",
+              "error": "#ba1a1a",
+              "surface": "#fbf9f8",
+              "on-error": "#ffffff",
+              "tertiary-container": "#036c5f",
+              "primary-container": "#005fb8",
+              "on-secondary-fixed": "#001e30",
+              "secondary": "#486176",
+              "surface-container-low": "#f5f3f3",
+              "inverse-on-surface": "#f2f0f0",
+              "on-surface-variant": "#424752",
+              "on-primary-fixed": "#001b3d",
+              "secondary-fixed-dim": "#afcae2",
+              "primary": "#00488d",
+              "outline-variant": "#c2c6d4",
+              "on-tertiary-fixed-variant": "#005046",
+              "on-secondary-fixed-variant": "#30495d",
+              "surface-container-highest": "#e4e2e2",
+              "primary-fixed-dim": "#a8c8ff",
+              "on-surface": "#1b1c1c",
+              "surface-container-lowest": "#ffffff",
+              "on-background": "#1b1c1c",
+              "background": "#fbf9f8",
+              "inverse-primary": "#a8c8ff",
+              "surface-variant": "#e4e2e2"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3 { font-family: 'Manrope', sans-serif; }
+        .glass-panel {
+            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.7);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface flex min-h-screen">
+<!-- SideNavBar (Updated based on COMPONENTS_23) -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-[#f5f3f3] dark:bg-slate-900 flex flex-col p-4 space-y-2 z-50">
+<div class="mb-8 px-2 flex items-center space-x-3">
+<div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-on-primary shadow-sm">
+<span class="material-symbols-outlined">analytics</span>
+</div>
+<div>
+<h1 class="font-manrope font-bold text-[#00488d] dark:text-blue-400 text-lg leading-tight">研发管理终端</h1>
+<p class="text-[10px] text-slate-500 font-medium tracking-widest uppercase">Enterprise Edition</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="bg-white dark:bg-slate-800 text-[#00488d] dark:text-blue-400 font-semibold rounded-lg shadow-sm flex items-center space-x-3 px-4 py-3 transition-transform duration-200 translate-x-1" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-manrope text-sm tracking-tight">汇总看板</span>
+</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-[#00488d] hover:bg-[#dbdad9] dark:hover:bg-slate-800 rounded-lg flex items-center space-x-3 px-4 py-3 transition-transform duration-200 hover:translate-x-1" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="font-manrope text-sm tracking-tight">工作日志</span>
+</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-[#00488d] hover:bg-[#dbdad9] dark:hover:bg-slate-800 rounded-lg flex items-center space-x-3 px-4 py-3 transition-transform duration-200 hover:translate-x-1" href="#">
+<span class="material-symbols-outlined">edit_note</span>
+<span class="font-manrope text-sm tracking-tight">工作登记</span>
+</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-[#00488d] hover:bg-[#dbdad9] dark:hover:bg-slate-800 rounded-lg flex items-center space-x-3 px-4 py-3 transition-transform duration-200 hover:translate-x-1" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-manrope text-sm tracking-tight">员工管理</span>
+</a>
+</nav>
+<div class="pt-4 border-t border-outline-variant/15 space-y-1">
+<button class="w-full bg-gradient-to-br from-primary to-primary-container text-on-primary font-bold py-3 rounded-lg shadow-lg mb-6 active:scale-95 transition-transform flex items-center justify-center space-x-2">
+<span class="material-symbols-outlined text-sm">add</span>
+<span>新建日志</span>
+</button>
+<a class="text-slate-600 dark:text-slate-400 hover:text-[#00488d] hover:bg-[#dbdad9] dark:hover:bg-slate-800 rounded-lg flex items-center space-x-3 px-4 py-3 transition-transform duration-200 hover:translate-x-1" href="#">
+<span class="material-symbols-outlined text-sm">person</span>
+<span class="font-manrope text-sm tracking-tight">个人中心</span>
+</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-[#00488d] hover:bg-[#dbdad9] dark:hover:bg-slate-800 rounded-lg flex items-center space-x-3 px-4 py-3 transition-transform duration-200 hover:translate-x-1" href="#">
+<span class="material-symbols-outlined text-sm">logout</span>
+<span class="font-manrope text-sm tracking-tight">安全退出</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 flex-1 min-h-screen bg-surface flex flex-col">
+<!-- TopAppBar -->
+<header class="w-full sticky top-0 z-40 bg-surface-bright/80 backdrop-blur-md px-8 py-6 flex justify-between items-center">
+<div>
+<h2 class="font-manrope text-2xl font-bold text-primary tracking-tight">汇总看板</h2>
+<p class="text-sm text-on-surface-variant/70 mt-1">实时掌握研发资源投入与项目进度</p>
+</div>
+<div class="flex items-center space-x-6">
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="bg-surface-container-low border-none rounded-full py-2 pl-10 pr-4 w-64 focus:ring-2 focus:ring-primary/20 text-sm transition-all" placeholder="搜索报表、员工或产品..." type="text"/>
+</div>
+<div class="flex items-center space-x-4">
+<button class="p-2 hover:bg-surface-container rounded-full transition-colors relative">
+<span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="p-2 hover:bg-surface-container rounded-full transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">help_outline</span>
+</button>
+<img alt="User professional profile portrait" class="w-10 h-10 rounded-full object-cover ring-2 ring-primary/10" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDsOJa_4wN_KNWNSBhaSe-dTLwVBKBwiz6Q4lQ3boe8G8U4DO9a7iYPZzfHLEShPnOwo7vkcFNt6oY24FPaDgaj5WpIsb_YaWEG13Mg7rIEhvV-fFz3TOI53rw39s-SsMf9DHZodVlwQkOeIfbMnKQ95Ksr2lcTN7-hCVszALKEZpm1ORB4F1xrBe4doERW7xD4_mIajkU3SVcajKgoPtzWvtfdfSZIRX6Jcs--RsKuGThkLniGd9YBtMz1AgXEu_g8HB4Sb-4s9nJ7"/>
+</div>
+</div>
+</header>
+<div class="px-8 pb-12 space-y-10">
+<!-- Key Metrics Grid -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-[0_12px_32px_rgba(0,72,141,0.04)] transition-transform hover:-translate-y-1">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-primary/5 rounded-lg">
+<span class="material-symbols-outlined text-primary">schedule</span>
+</div>
+<span class="text-[10px] font-bold text-primary px-2 py-1 bg-primary-fixed rounded-full">TOTAL</span>
+</div>
+<p class="text-on-surface-variant text-xs font-semibold uppercase tracking-wider mb-1">总累计工时</p>
+<h3 class="text-3xl font-manrope font-extrabold text-on-surface">1,284 <span class="text-sm font-normal text-on-surface-variant">h</span></h3>
+<p class="mt-4 text-xs text-tertiary flex items-center">
+<span class="material-symbols-outlined text-sm mr-1">trending_up</span>
+                        较上月增长 12%
+                    </p>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-[0_12px_32px_rgba(0,72,141,0.04)] transition-transform hover:-translate-y-1">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-secondary/5 rounded-lg">
+<span class="material-symbols-outlined text-secondary">business_center</span>
+</div>
+</div>
+<p class="text-on-surface-variant text-xs font-semibold uppercase tracking-wider mb-1">有效业务工时占比</p>
+<h3 class="text-3xl font-manrope font-extrabold text-on-surface">68.5%</h3>
+<div class="mt-4 w-full bg-surface-container rounded-full h-1.5 overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 68.5%"></div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-[0_12px_32px_rgba(0,72,141,0.04)] border-l-4 border-error transition-transform hover:-translate-y-1">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-error-container/20 rounded-lg">
+<span class="material-symbols-outlined text-error">bug_report</span>
+</div>
+<div class="flex items-center space-x-1 text-[10px] text-error font-bold bg-error-container px-2 py-0.5 rounded">
+<span class="material-symbols-outlined text-[12px]">warning</span>
+<span>RED LINE 25%</span>
+</div>
+</div>
+<p class="text-on-surface-variant text-xs font-semibold uppercase tracking-wider mb-1">Bug 修复占比</p>
+<h3 class="text-3xl font-manrope font-extrabold text-error">31.2%</h3>
+<p class="mt-4 text-xs text-on-surface-variant italic">高于预警阈值，需关注质量</p>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-[0_12px_32px_rgba(0,72,141,0.04)] transition-transform hover:-translate-y-1">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-tertiary/5 rounded-lg">
+<span class="material-symbols-outlined text-tertiary">pause_circle</span>
+</div>
+</div>
+<p class="text-on-surface-variant text-xs font-semibold uppercase tracking-wider mb-1">已挂起任务</p>
+<h3 class="text-3xl font-manrope font-extrabold text-on-surface">14</h3>
+<div class="flex -space-x-2 mt-4">
+<img alt="Team member profile picture small" class="w-6 h-6 rounded-full border-2 border-surface-container-lowest" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAg0PyhzyEVIhgjzwzQ5pAZRJunYy12lm-8hhfz9WSPV2sbzM-HtJBE9IgXyt9I-wT2fSqPuxL-9uwtKbDSdRna3BtOsoPapwDgW3os1U3IKiMpMCG3o6SGFVy7mEuKrn4E2UFvpVnGKgK8bBH_Wp7OFpKZQ7AGdovj_QS0x6J-t6mOeBnpC8mkMxN-Z_qzwE6eX2zSSKxzpTgnub4tdc2_WkO7NIjtg39xrHoak74vvf4Mcmu0rqXTG2dIyFhMXjN0erv6w2FWOqGz"/>
+<img alt="Team member profile picture small" class="w-6 h-6 rounded-full border-2 border-surface-container-lowest" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqZzBdi5q7xfI2Okskkm-w4aj4kHIQQFY4qaWd_7JEVn1u5AvCA7vQ2_lrQwJ4FzGmrN_OKc-UJqddS-ceyMQ9ULvJKJ2b74pkibN55hgf2XMCrZvjHag_5gYz7SnJWTHJtuRhJBuBpVZt9n7qi4hkaF2UkXBld05DBpmvJPCulIPKLlcIoAK-UokkyteadcfQemDlEpWBn8KQM0IyuZ-y_q3DA8CRLGwgySsoHsb2pzG-PrHoTbxttVSdD9sDZTSYH6qeZ74NRTnb"/>
+<div class="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center text-[8px] font-bold text-on-surface-variant border-2 border-surface-container-lowest">+12</div>
+</div>
+</div>
+</section>
+<!-- Charts and Blocking Alert Area (Asymmetric Layout) -->
+<section class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- Column Chart Area -->
+<div class="lg:col-span-2 bg-surface-container-low rounded-xl p-8">
+<div class="flex justify-between items-center mb-10">
+<h4 class="font-manrope text-xl font-bold text-primary">产品资源投入分布</h4>
+<div class="flex items-center space-x-2 bg-surface-container-lowest rounded-lg p-1">
+<button class="px-4 py-1.5 text-xs font-bold bg-primary text-on-primary rounded-md">本周</button>
+<button class="px-4 py-1.5 text-xs font-bold text-on-surface-variant hover:bg-surface-container transition-colors rounded-md">上周</button>
+</div>
+</div>
+<div class="h-64 flex items-end justify-around pb-4 border-b border-outline-variant/20">
+<!-- Bar 1 -->
+<div class="flex flex-col items-center group w-12">
+<div class="w-full bg-primary/20 rounded-t-sm h-48 relative overflow-hidden">
+<div class="absolute bottom-0 w-full bg-primary h-3/4 rounded-t-sm transition-all group-hover:brightness-110"></div>
+</div>
+<span class="mt-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">CRM系统</span>
+</div>
+<!-- Bar 2 -->
+<div class="flex flex-col items-center group w-12">
+<div class="w-full bg-primary/20 rounded-t-sm h-48 relative overflow-hidden">
+<div class="absolute bottom-0 w-full bg-primary h-1/2 rounded-t-sm transition-all group-hover:brightness-110"></div>
+</div>
+<span class="mt-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">数据中台</span>
+</div>
+<!-- Bar 3 -->
+<div class="flex flex-col items-center group w-12">
+<div class="w-full bg-primary/20 rounded-t-sm h-48 relative overflow-hidden">
+<div class="absolute bottom-0 w-full bg-primary h-full rounded-t-sm transition-all group-hover:brightness-110"></div>
+</div>
+<span class="mt-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">OA升级</span>
+</div>
+<!-- Bar 4 -->
+<div class="flex flex-col items-center group w-12">
+<div class="w-full bg-primary/20 rounded-t-sm h-48 relative overflow-hidden">
+<div class="absolute bottom-0 w-full bg-primary h-1/3 rounded-t-sm transition-all group-hover:brightness-110"></div>
+</div>
+<span class="mt-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">支付中心</span>
+</div>
+<!-- Bar 5 -->
+<div class="flex flex-col items-center group w-12">
+<div class="w-full bg-primary/20 rounded-t-sm h-48 relative overflow-hidden">
+<div class="absolute bottom-0 w-full bg-primary h-2/3 rounded-t-sm transition-all group-hover:brightness-110"></div>
+</div>
+<span class="mt-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">AI Lab</span>
+</div>
+</div>
+</div>
+<!-- Blocking Alerts Area -->
+<div class="bg-error-container/10 border border-error/5 rounded-xl p-8">
+<div class="flex items-center space-x-2 mb-6">
+<span class="material-symbols-outlined text-error" style="font-variation-settings: 'FILL' 1;">warning</span>
+<h4 class="font-manrope text-xl font-bold text-error">阻塞预警</h4>
+</div>
+<div class="space-y-4">
+<div class="bg-surface-container-lowest p-4 rounded-lg shadow-sm border-l-4 border-error">
+<div class="flex justify-between items-center mb-2">
+<span class="text-[10px] font-bold px-2 py-0.5 bg-error/10 text-error rounded uppercase">CRITICAL</span>
+<span class="text-[10px] text-on-surface-variant font-medium">挂起 5天</span>
+</div>
+<h5 class="font-bold text-sm text-on-surface mb-1">支付模块接口联调阻塞</h5>
+<p class="text-xs text-on-surface-variant line-clamp-2">由于第三方支付SDK版本不兼容导致，需要供应商协同处理。</p>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded-lg shadow-sm border-l-4 border-error">
+<div class="flex justify-between items-center mb-2">
+<span class="text-[10px] font-bold px-2 py-0.5 bg-error/10 text-error rounded uppercase">URGENT</span>
+<span class="text-[10px] text-on-surface-variant font-medium">挂起 3天</span>
+</div>
+<h5 class="font-bold text-sm text-on-surface mb-1">生产环境数据库迁移验证</h5>
+<p class="text-xs text-on-surface-variant line-clamp-2">等待运维团队分配临时高性能存储卷进行最终校验。</p>
+</div>
+<button class="w-full py-3 mt-4 border border-error/20 rounded-lg text-error text-sm font-bold hover:bg-error/5 transition-colors">
+                            查看全部阻塞任务
+                        </button>
+</div>
+</div>
+</section>
+<!-- Employee Output List Table -->
+<section class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_12px_48px_rgba(0,0,0,0.03)]">
+<div class="px-8 py-6 border-b border-outline-variant/10 flex justify-between items-center">
+<div>
+<h4 class="font-manrope text-xl font-bold text-primary">员工每日产出明细</h4>
+<p class="text-xs text-on-surface-variant mt-1">最近 24 小时内的研发活动记录</p>
+</div>
+<button class="flex items-center space-x-2 text-primary font-bold text-sm px-4 py-2 hover:bg-primary/5 rounded-lg transition-colors">
+<span class="material-symbols-outlined text-lg">download</span>
+<span>导出明细报表</span>
+</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full border-collapse">
+<thead>
+<tr class="bg-surface-container-low/50">
+<th class="text-left px-8 py-4 font-label font-bold text-[10px] text-on-surface-variant uppercase tracking-widest">研发人员</th>
+<th class="text-left px-8 py-4 font-label font-bold text-[10px] text-on-surface-variant uppercase tracking-widest">所属产品</th>
+<th class="text-left px-8 py-4 font-label font-bold text-[10px] text-on-surface-variant uppercase tracking-widest">投入时长</th>
+<th class="text-left px-8 py-4 font-label font-bold text-[10px] text-on-surface-variant uppercase tracking-widest">工作描述</th>
+<th class="text-right px-8 py-4 font-label font-bold text-[10px] text-on-surface-variant uppercase tracking-widest">状态</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/5">
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="px-8 py-5">
+<div class="flex items-center space-x-3">
+<div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">张伟</div>
+<span class="text-sm font-bold text-on-surface">张伟</span>
+</div>
+</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant">CRM系统</td>
+<td class="px-8 py-5 text-sm font-manrope font-bold text-on-surface">7.5h</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant">完成客户公海池列表优化，响应速度提升40%</td>
+<td class="px-8 py-5 text-right">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-tertiary-fixed-dim/30 text-tertiary">已确认</span>
+</td>
+</tr>
+<tr class="bg-surface-container-low/20 hover:bg-surface-container-low/30 transition-colors">
+<td class="px-8 py-5">
+<div class="flex items-center space-x-3">
+<div class="w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center text-secondary font-bold text-xs">李娜</div>
+<span class="text-sm font-bold text-on-surface">李娜</span>
+</div>
+</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant">数据中台</td>
+<td class="px-8 py-5 text-sm font-manrope font-bold text-on-surface">8.0h</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant">处理看板实时计算逻辑Bug，修复多表关联统计偏差</td>
+<td class="px-8 py-5 text-right">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-tertiary-fixed-dim/30 text-tertiary">已确认</span>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="px-8 py-5">
+<div class="flex items-center space-x-3">
+<div class="w-8 h-8 rounded-full bg-tertiary/10 flex items-center justify-center text-tertiary font-bold text-xs">王强</div>
+<span class="text-sm font-bold text-on-surface">王强</span>
+</div>
+</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant">OA升级</td>
+<td class="px-8 py-5 text-sm font-manrope font-bold text-on-surface">4.5h</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant">审批流配置模块前端组件库迁移，联调中...</td>
+<td class="px-8 py-5 text-right">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-secondary-container text-secondary">进行中</span>
+</td>
+</tr>
+<tr class="bg-surface-container-low/20 hover:bg-surface-container-low/30 transition-colors">
+<td class="px-8 py-5">
+<div class="flex items-center space-x-3">
+<div class="w-8 h-8 rounded-full bg-error/10 flex items-center justify-center text-error font-bold text-xs">赵敏</div>
+<span class="text-sm font-bold text-on-surface">赵敏</span>
+</div>
+</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant">支付中心</td>
+<td class="px-8 py-5 text-sm font-manrope font-bold text-on-surface">2.0h</td>
+<td class="px-8 py-5 text-sm text-on-surface-variant">排查SDK兼容性问题，当前处于阻塞状态</td>
+<td class="px-8 py-5 text-right">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-error-container text-error">阻塞</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+</main>
+</body></html>
