@@ -30,7 +30,7 @@ const submitSuccessMessage = ref('')
 const fetchLogs = async () => {
   if (!authStore.user.id) return
   try {
-    const res = await fetch(`http://localhost:3000/api/v1/work-logs?startDate=${isoDate}&endDate=${isoDate}&userId=${authStore.user.id}&limit=100`)
+    const res = await fetch(`/api/v1/work-logs?startDate=${isoDate}&endDate=${isoDate}&userId=${authStore.user.id}&limit=100`)
     const json = await res.json()
     if (json.code === 200) {
       entries.value = json.data.list.map(item => ({
@@ -64,14 +64,14 @@ const saveEntry = async () => {
     const isEditing = editingIndex.value > -1;
     if (isEditing) {
       const dbId = entries.value[editingIndex.value].id
-      await fetch(`http://localhost:3000/api/v1/work-logs/${dbId}`, {
+      await fetch(`/api/v1/work-logs/${dbId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       })
       editingIndex.value = -1
     } else {
-      await fetch('http://localhost:3000/api/v1/work-logs', {
+      await fetch('/api/v1/work-logs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -108,7 +108,7 @@ const removeEntry = async (index) => {
   
   const dbId = entries.value[index].id
   try {
-    await fetch(`http://localhost:3000/api/v1/work-logs/${dbId}`, {
+    await fetch(`/api/v1/work-logs/${dbId}`, {
       method: 'DELETE'
     })
     await fetchLogs()
@@ -134,7 +134,7 @@ onMounted(() => {
 
 const exportData = () => {
   if (!authStore.user.id) return
-  window.location.href = `http://localhost:3000/api/v1/work-logs/export?startDate=${isoDate}&endDate=${isoDate}&userId=${authStore.user.id}`
+  window.location.href = `/api/v1/work-logs/export?startDate=${isoDate}&endDate=${isoDate}&userId=${authStore.user.id}`
 }
 </script>
 

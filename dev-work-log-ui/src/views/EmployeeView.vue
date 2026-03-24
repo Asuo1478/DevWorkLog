@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 
-const API_BASE = 'http://localhost:3000/api/v1/users'
+const API_BASE = '/api/v1/users'
 
 // Search filters
 const searchFilters = ref({

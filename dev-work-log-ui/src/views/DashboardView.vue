@@ -71,7 +71,7 @@ const fetchWorkLogDetail = async () => {
     params.append('page', pagination.value.page);
     params.append('pageSize', pagination.value.pageSize);
 
-    const res = await fetch(`http://localhost:3000/api/v1/dashboard/work-log-detail?${params.toString()}`);
+    const res = await fetch(`/api/v1/dashboard/work-log-detail?${params.toString()}`);
     const json = await res.json();
     if (json.code === 200) {
       workLogList.value = json.data.list;
@@ -92,7 +92,7 @@ const goToPage = (p) => {
 
 const exportDetailReport = () => {
   const params = getApiParams();
-  window.location.href = `http://localhost:3000/api/v1/dashboard/work-log-export?${params.toString()}`;
+  window.location.href = `/api/v1/dashboard/work-log-export?${params.toString()}`;
 };
 
 watch([period, globalDateRange], () => {
@@ -114,7 +114,7 @@ const metrics = ref({
 const fetchMetricsData = async () => {
   try {
     const params = getApiParams();
-    const res = await fetch(`http://localhost:3000/api/v1/dashboard/metrics?${params.toString()}`);
+    const res = await fetch(`/api/v1/dashboard/metrics?${params.toString()}`);
     const json = await res.json();
     if (json.code === 200) {
       metrics.value = json.data;
@@ -133,7 +133,7 @@ const fetchAlerts = async () => {
   try {
     const params = getApiParams();
     params.set('resolved', '0'); // Show only unresolved alerts on the dashboard list
-    const res = await fetch(`http://localhost:3000/api/v1/dashboard/alerts?${params.toString()}`);
+    const res = await fetch(`/api/v1/dashboard/alerts?${params.toString()}`);
     const json = await res.json();
     if (json.code === 200) {
       alertsList.value = json.data;
@@ -145,7 +145,7 @@ const fetchAlerts = async () => {
 
 const resolveAlert = async (id) => {
   try {
-    const res = await fetch(`http://localhost:3000/api/v1/dashboard/alerts/${id}/resolve`, {
+    const res = await fetch(`/api/v1/dashboard/alerts/${id}/resolve`, {
       method: 'PUT'
     });
     const json = await res.json();
@@ -165,7 +165,7 @@ const calcDays = (startDate) => {
 const openAllAlertsModal = async () => {
   try {
     const params = getApiParams();
-    const res = await fetch(`http://localhost:3000/api/v1/dashboard/alerts?${params.toString()}`);
+    const res = await fetch(`/api/v1/dashboard/alerts?${params.toString()}`);
     const json = await res.json();
     if (json.code === 200) {
       allAlertsList.value = json.data;
@@ -192,8 +192,8 @@ const fetchChartsData = async () => {
     const params = getApiParams();
     
     const [resDist, resTrend] = await Promise.all([
-      fetch(`http://localhost:3000/api/v1/dashboard/distribution?${params.toString()}`),
-      fetch(`http://localhost:3000/api/v1/dashboard/weekly-trend?${params.toString()}`)
+      fetch(`/api/v1/dashboard/distribution?${params.toString()}`),
+      fetch(`/api/v1/dashboard/weekly-trend?${params.toString()}`)
     ]);
 
     const jsonDist = await resDist.json();

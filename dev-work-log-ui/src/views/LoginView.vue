@@ -16,7 +16,7 @@ const handleLogin = async () => {
   isLoading.value = true
 
   try {
-    const res = await fetch('http://localhost:3000/api/v1/users/login', {
+    const res = await fetch('/api/v1/users/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username: identifier.value, password: password.value })

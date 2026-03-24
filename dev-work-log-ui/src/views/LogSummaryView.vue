@@ -99,7 +99,7 @@ const fetchRecords = async () => {
   if (!authStore.user.id) return
 
   try {
-    const res = await fetch(`http://localhost:3000/api/v1/work-logs/summary?${buildQueryParams()}`)
+    const res = await fetch(`/api/v1/work-logs/summary?${buildQueryParams()}`)
     const json = await res.json()
     if (json.code === 200) {
       totalCount.value = json.data.total

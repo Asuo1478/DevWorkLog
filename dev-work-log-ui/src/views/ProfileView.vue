@@ -43,7 +43,7 @@ const handlePasswordReset = async () => {
   isSubmitting.value = true
 
   try {
-    const res = await fetch(`http://localhost:3000/api/v1/users/${authStore.user.id}/password`, {
+    const res = await fetch(`/api/v1/users/${authStore.user.id}/password`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
