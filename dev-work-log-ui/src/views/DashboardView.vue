@@ -509,7 +509,7 @@ const formatDate = (d) => d ? d.substring(0, 10) : '';
     <section class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_12px_48px_rgba(0,0,0,0.03)]">
       <div class="px-8 py-6 border-b border-outline-variant/10 flex justify-between items-center">
         <div>
-          <h4 class="font-manrope text-xl font-bold text-primary">员工每日产出明细</h4>
+          <h4 class="font-manrope text-xl font-bold text-primary">{{ authStore.isAdmin ? '员工每日产出明细' : '个人每日产出明细' }}</h4>
         </div>
         <button @click="exportDetailReport" class="flex items-center space-x-2 text-primary font-bold text-sm px-4 py-2 hover:bg-primary/5 rounded-lg transition-colors">
           <span class="material-symbols-outlined text-lg">download</span>

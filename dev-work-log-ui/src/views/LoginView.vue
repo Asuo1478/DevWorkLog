@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import MD5 from 'crypto-js/md5'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -15,11 +16,13 @@ const handleLogin = async () => {
   errorMessage.value = ''
   isLoading.value = true
 
+  const hashedPassword = MD5(password.value).toString()
+
   try {
     const res = await fetch('/api/v1/users/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: identifier.value, password: password.value })
+      body: JSON.stringify({ username: identifier.value, password: hashedPassword })
     })
 
     const json = await res.json()

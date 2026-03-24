@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useAuthStore } from '../stores/auth'
+import MD5 from 'crypto-js/md5'
 
 const authStore = useAuthStore()
 
@@ -42,13 +43,16 @@ const handlePasswordReset = async () => {
 
   isSubmitting.value = true
 
+  const hashedCurrent = MD5(passwordForm.value.currentPassword).toString()
+  const hashedNew = MD5(passwordForm.value.newPassword).toString()
+
   try {
     const res = await fetch(`/api/v1/users/${authStore.user.id}/password`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        currentPassword: passwordForm.value.currentPassword,
-        newPassword: passwordForm.value.newPassword
+        currentPassword: hashedCurrent,
+        newPassword: hashedNew
       })
     })
     

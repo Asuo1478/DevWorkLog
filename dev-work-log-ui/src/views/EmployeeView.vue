@@ -1,6 +1,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 
+import MD5 from 'crypto-js/md5'
+
 const API_BASE = '/api/v1/users'
 
 // Search filters
@@ -164,18 +166,25 @@ const openEditModal = (emp) => {
 const submitForm = async () => {
   if (!isFormValid.value) return
   try {
+    const payload = { ...formData.value }
+    if (payload.password) {
+      payload.password = MD5(payload.password).toString()
+    } else if (formMode.value === 'edit') {
+      delete payload.password // In edit mode, if empty, we don't want to send it
+    }
+
     let res, json
     if (formMode.value === 'add') {
       res = await fetch(`${API_BASE}/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData.value)
+        body: JSON.stringify(payload)
       })
     } else {
       res = await fetch(`${API_BASE}/${formData.value.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData.value)
+        body: JSON.stringify(payload)
       })
     }
     json = await res.json()

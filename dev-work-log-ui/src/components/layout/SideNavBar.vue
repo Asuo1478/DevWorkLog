@@ -1,14 +1,21 @@
 <script setup>
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
+const router = useRouter()
+const authStore = useAuthStore()
 
 const isActive = (path) => {
-  // Simple check for exact match or starts with for nested routes
   if (path === '/logs') {
     return route.path === '/logs'
   }
   return route.path.startsWith(path)
+}
+
+const handleLogout = () => {
+  authStore.logout()
+  router.push('/login')
 }
 </script>
 
@@ -64,6 +71,7 @@ const isActive = (path) => {
       </router-link>
 
       <router-link 
+        v-if="authStore.isAdmin"
         to="/employees"
         :class="[
           'flex items-center space-x-3 px-4 py-3 rounded-lg transition-transform duration-200',
@@ -86,10 +94,13 @@ const isActive = (path) => {
         <span class="material-symbols-outlined text-sm">person</span>
         <span class="font-manrope text-sm tracking-tight">个人中心</span>
       </router-link>
-      <router-link to="/login" class="text-slate-600 dark:text-slate-400 hover:text-error hover:bg-error-container/50 dark:hover:bg-slate-800 rounded-lg flex items-center space-x-3 px-4 py-3 transition-transform duration-200 hover:translate-x-1">
+      <button 
+        @click="handleLogout"
+        class="w-full text-slate-600 dark:text-slate-400 hover:text-error hover:bg-error-container/50 dark:hover:bg-slate-800 rounded-lg flex items-center space-x-3 px-4 py-3 transition-transform duration-200 hover:translate-x-1"
+      >
         <span class="material-symbols-outlined text-sm">logout</span>
         <span class="font-manrope text-sm tracking-tight">安全退出</span>
-      </router-link>
+      </button>
     </div>
   </aside>
 </template>

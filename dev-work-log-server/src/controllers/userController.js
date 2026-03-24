@@ -90,7 +90,7 @@ const UserController = {
       const user = await SysUser.create({
         name,
         username,
-        password: md5(password),
+        password: password,
         group_name: group_name || null,
         job_desc: job_desc || null,
         avatar_char: name.charAt(0),
@@ -166,7 +166,7 @@ const UserController = {
 
       // Only update password if provided
       if (password) {
-        user.password = md5(password);
+        user.password = password;
       }
 
       await user.save();
@@ -193,7 +193,7 @@ const UserController = {
   login: async (req, res, next) => {
     try {
       const { username, password } = req.body;
-      const hashedPassword = md5(password);
+      const hashedPassword = password;
       
       const user = await SysUser.findOne({ 
         where: { username, password: hashedPassword },
@@ -218,12 +218,12 @@ const UserController = {
       
       if (!user) return res.error('用户不存在', 404);
       
-      const hashedCurrent = md5(currentPassword);
+      const hashedCurrent = currentPassword;
       if (user.password !== hashedCurrent) {
         return res.error('当前登录密码认证失败，请重新输入', 401);
       }
       
-      user.password = md5(newPassword);
+      user.password = newPassword;
       await user.save();
       
       res.success(null, '密码修改成功');
