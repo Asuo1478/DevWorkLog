@@ -1,11 +1,9 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-
+import { computed, onMounted, ref } from 'vue'
 import MD5 from 'crypto-js/md5'
 
 const API_BASE = '/api/v1/users'
 
-// Search filters
 const searchFilters = ref({
   name: '',
   username: '',
@@ -13,24 +11,26 @@ const searchFilters = ref({
   group_name: '全部'
 })
 
-// Pagination
 const pagination = ref({
   page: 1,
   pageSize: 10,
   total: 0
 })
 
-// Data
 const employees = ref([])
 const groupOptions = ref([])
 const loading = ref(false)
 const operationMsg = ref('')
 
-// Modal states
 const showFormModal = ref(false)
-const formMode = ref('add') // 'add' | 'edit'
+const formMode = ref('add')
 const showDetailModal = ref(false)
 const detailUser = ref(null)
+
+const showConfirmModal = ref(false)
+const confirmModalTitle = ref('')
+const confirmModalMessage = ref('')
+const confirmModalAction = ref(null)
 
 const formData = ref({
   id: null,
@@ -41,7 +41,6 @@ const formData = ref({
   job_desc: ''
 })
 
-// Computed: total pages
 const totalPages = computed(() => Math.max(1, Math.ceil(pagination.value.total / pagination.value.pageSize)))
 const pageNumbers = computed(() => {
   const total = totalPages.value
@@ -50,13 +49,13 @@ const pageNumbers = computed(() => {
   let start = Math.max(1, current - 2)
   let end = Math.min(total, start + 4)
   start = Math.max(1, end - 4)
-  for (let i = start; i <= end; i++) pages.push(i)
+  for (let i = start; i <= end; i += 1) pages.push(i)
   return pages
 })
 
-const formTitle = computed(() => formMode.value === 'add' ? '添加新账号' : '编辑账号信息')
-const formIcon = computed(() => formMode.value === 'add' ? 'person_add' : 'edit')
-const formSubmitText = computed(() => formMode.value === 'add' ? '确认添加' : '保存修改')
+const formTitle = computed(() => (formMode.value === 'add' ? '添加新账号' : '编辑账号信息'))
+const formIcon = computed(() => (formMode.value === 'add' ? 'person_add' : 'edit'))
+const formSubmitText = computed(() => (formMode.value === 'add' ? '确认添加' : '保存修改'))
 const isFormValid = computed(() => {
   if (formMode.value === 'add') {
     return formData.value.name && formData.value.username && formData.value.password
@@ -64,9 +63,6 @@ const isFormValid = computed(() => {
   return formData.value.name && formData.value.username
 })
 
-// ---- API methods ----
-
-// Fetch user list from backend
 const fetchUsers = async () => {
   loading.value = true
   try {
@@ -95,7 +91,6 @@ const fetchUsers = async () => {
   }
 }
 
-// Fetch distinct group names
 const fetchGroups = async () => {
   try {
     const res = await fetch(`${API_BASE}/groups`)
@@ -108,27 +103,23 @@ const fetchGroups = async () => {
   }
 }
 
-// Search (reset to page 1)
 const doSearch = () => {
   pagination.value.page = 1
   fetchUsers()
 }
 
-// Reset filters
 const resetFilters = () => {
   searchFilters.value = { name: '', username: '', status: '全部', group_name: '全部' }
   pagination.value.page = 1
   fetchUsers()
 }
 
-// Page change
-const goToPage = (p) => {
-  if (p < 1 || p > totalPages.value) return
-  pagination.value.page = p
+const goToPage = (page) => {
+  if (page < 1 || page > totalPages.value) return
+  pagination.value.page = page
   fetchUsers()
 }
 
-// Toggle user status
 const toggleStatus = async (emp) => {
   try {
     const res = await fetch(`${API_BASE}/${emp.id}/toggle-status`, { method: 'PUT' })
@@ -142,11 +133,16 @@ const toggleStatus = async (emp) => {
   }
 }
 
-// ---- Form Modal (Add / Edit) ----
-
 const openAddModal = () => {
   formMode.value = 'add'
-  formData.value = { id: null, name: '', username: '', password: '', group_name: groupOptions.value[0] || '', job_desc: '' }
+  formData.value = {
+    id: null,
+    name: '',
+    username: '',
+    password: '',
+    group_name: groupOptions.value[0] || '',
+    job_desc: ''
+  }
   showFormModal.value = true
 }
 
@@ -170,29 +166,23 @@ const submitForm = async () => {
     if (payload.password) {
       payload.password = MD5(payload.password).toString()
     } else if (formMode.value === 'edit') {
-      delete payload.password // In edit mode, if empty, we don't want to send it
+      delete payload.password
     }
 
-    let res, json
-    if (formMode.value === 'add') {
-      res = await fetch(`${API_BASE}/create`, {
-        method: 'POST',
+    const res = await fetch(
+      formMode.value === 'add' ? `${API_BASE}/create` : `${API_BASE}/${formData.value.id}`,
+      {
+        method: formMode.value === 'add' ? 'POST' : 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
-      })
-    } else {
-      res = await fetch(`${API_BASE}/${formData.value.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-    }
-    json = await res.json()
+      }
+    )
+    const json = await res.json()
     if (json.code === 200) {
       showFormModal.value = false
       showOperationMsg(json.msg)
       fetchUsers()
-      fetchGroups() // refresh groups in case new group was added
+      fetchGroups()
     } else {
       alert(json.msg)
     }
@@ -200,8 +190,6 @@ const submitForm = async () => {
     console.error('提交失败', error)
   }
 }
-
-// ---- Detail Modal ----
 
 const openDetailModal = async (emp) => {
   try {
@@ -216,46 +204,70 @@ const openDetailModal = async (emp) => {
   }
 }
 
-// ---- Delete ----
-
-const deleteUser = async (emp) => {
-  if (!window.confirm(`确定要删除账号「${emp.name}」吗？\n该操作不可逆，删除后将无法恢复。`)) return
-  try {
-    const res = await fetch(`${API_BASE}/${emp.id}`, { method: 'DELETE' })
-    const json = await res.json()
-    if (json.code === 200) {
-      showOperationMsg(json.msg)
-      fetchUsers()
-    } else {
-      alert(json.msg)
-    }
-  } catch (error) {
-    console.error('删除失败', error)
-  }
+const openConfirmModal = (title, message, action) => {
+  confirmModalTitle.value = title
+  confirmModalMessage.value = message
+  confirmModalAction.value = action
+  showConfirmModal.value = true
 }
 
-// ---- Helpers ----
+const closeConfirmModal = () => {
+  showConfirmModal.value = false
+  confirmModalTitle.value = ''
+  confirmModalMessage.value = ''
+  confirmModalAction.value = null
+}
+
+const confirmModalSubmit = async () => {
+  if (typeof confirmModalAction.value === 'function') {
+    await confirmModalAction.value()
+  }
+  closeConfirmModal()
+}
+
+const deleteUser = async (emp) => {
+  openConfirmModal(
+    '删除账号信息',
+    `确认删除账号“${emp.name}”吗？`,
+    async () => {
+      try {
+        const res = await fetch(`${API_BASE}/${emp.id}`, { method: 'DELETE' })
+        const json = await res.json()
+        if (json.code === 200) {
+          showOperationMsg(json.msg)
+          fetchUsers()
+        } else {
+          alert(json.msg)
+        }
+      } catch (error) {
+        console.error('删除失败', error)
+      }
+    }
+  )
+}
 
 const showOperationMsg = (msg) => {
   operationMsg.value = msg
-  setTimeout(() => { operationMsg.value = '' }, 2500)
+  setTimeout(() => {
+    operationMsg.value = ''
+  }, 2500)
 }
 
-const statusLabel = (s) => s === 1 ? '已启用' : '已禁用'
-const isActive = (s) => s === 1
+const isActive = (status) => status === 1
 
 const groupColors = {
-  '研发一部': { bg: 'bg-primary/10', text: 'text-primary' },
-  '研发二部': { bg: 'bg-secondary/10', text: 'text-secondary' },
-  '测试部':   { bg: 'bg-tertiary/10', text: 'text-tertiary' },
-  '产品部':   { bg: 'bg-primary/10', text: 'text-primary' },
+  研发一部: { bg: 'bg-primary/10', text: 'text-primary' },
+  研发二部: { bg: 'bg-secondary/10', text: 'text-secondary' },
+  测试部: { bg: 'bg-tertiary/10', text: 'text-tertiary' },
+  产品部: { bg: 'bg-primary/10', text: 'text-primary' }
 }
-const getGroupStyle = (g) => groupColors[g] || { bg: 'bg-surface-container', text: 'text-on-surface-variant' }
 
-const formatDate = (d) => {
-  if (!d) return '-'
-  const dt = new Date(d)
-  return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')} ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`
+const getGroupStyle = (group) => groupColors[group] || { bg: 'bg-surface-container', text: 'text-on-surface-variant' }
+
+const formatDate = (dateValue) => {
+  if (!dateValue) return '-'
+  const date = new Date(dateValue)
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
 }
 
 onMounted(() => {
@@ -265,115 +277,80 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="p-8 max-w-7xl mx-auto space-y-10 relative">
-
-    <!-- Operation toast -->
+  <div class="p-8 max-w-7xl mx-auto space-y-8 relative">
     <transition name="fade">
-      <div v-if="operationMsg" class="fixed top-6 right-8 z-[60] px-5 py-3 bg-tertiary text-on-tertiary rounded-lg shadow-xl text-sm font-bold flex items-center gap-2 animate-bounce-in">
+      <div v-if="operationMsg" class="fixed top-6 right-8 z-[60] px-5 py-3 bg-tertiary text-on-tertiary rounded-lg shadow-xl text-sm font-bold flex items-center gap-2">
         <span class="material-symbols-outlined text-[18px]">check_circle</span>
         {{ operationMsg }}
       </div>
     </transition>
 
-    <!-- Data Overview: Bento Grid -->
-    <section class="grid grid-cols-1 md:grid-cols-4 gap-6">
-      <div class="md:col-span-1 bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-outline-variant/10">
-        <p class="text-label text-on-surface-variant uppercase tracking-wider font-bold text-[11px] mb-2">系统账号总数</p>
-        <div class="flex items-baseline gap-2">
-          <span class="font-manrope text-4xl font-extrabold text-primary">{{ pagination.total }}</span>
-        </div>
-        <div class="mt-4 h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
-          <div class="h-full bg-primary w-full"></div>
-        </div>
-      </div>
-      
-      <div class="md:col-span-3 bg-surface-container-low p-6 rounded-xl flex flex-col md:flex-row gap-8 items-center">
-        <div class="flex-1 space-y-4 w-full">
-          <p class="text-label text-on-surface-variant uppercase tracking-wider font-bold text-[11px]">快速操作</p>
-          <p class="text-sm text-on-surface-variant opacity-70">通过下方检索面板查找账号，或添加新成员至系统</p>
-        </div>
-        <div class="hidden lg:block w-px h-16 bg-outline-variant opacity-20"></div>
-        <button @click="openAddModal" class="bg-surface-container-lowest px-6 py-4 rounded-lg flex items-center gap-3 group hover:bg-white transition-all shadow-sm shrink-0 active:scale-95 border-2 border-transparent hover:border-primary/20">
-          <span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">add_circle</span>
-          <div class="text-left">
-            <p class="text-sm font-bold text-primary">添加新账号</p>
-            <p class="text-[10px] text-on-surface-variant opacity-60">快速录入账号档案</p>
-          </div>
-        </button>
-      </div>
-    </section>
-
-    <!-- Employee List -->
     <section class="space-y-6">
-      <div class="flex justify-between items-end">
+      <div class="flex justify-between items-end gap-4">
         <div>
-           <h3 class="font-manrope text-xl font-bold text-on-surface">账号档案库</h3>
+          <h3 class="font-manrope text-xl font-bold text-on-surface">账号信息列表</h3>
           <p class="text-sm text-on-surface-variant opacity-70 mt-1">管理团队成员身份、角色及实时状态</p>
         </div>
+        <button @click="openAddModal" class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-on-primary shadow-sm transition-all hover:shadow-md active:scale-95">
+          <span class="material-symbols-outlined text-[18px]">person_add</span>
+          <span>新增账号</span>
+        </button>
       </div>
 
-      <!-- Search Filters -->
       <div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-outline-variant/10 grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
         <div class="space-y-1.5 md:col-span-1">
-          <label class="font-label text-xs font-bold text-on-surface-variant tracking-wider uppercase pl-1">员工姓名</label>
-          <input v-model="searchFilters.name" @keyup.enter="doSearch" type="text" placeholder="输入姓名检索" class="w-full bg-surface-container-low border-none rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 text-on-surface outline-none placeholder:text-outline-variant/70 transition-all font-medium" />
+          <label class="text-xs font-bold text-on-surface-variant tracking-wider uppercase pl-1">员工姓名</label>
+          <input v-model="searchFilters.name" @keyup.enter="doSearch" type="text" placeholder="输入姓名搜索" class="w-full bg-surface-container-low border-none rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 text-on-surface outline-none placeholder:text-outline-variant/70" />
         </div>
         <div class="space-y-1.5 md:col-span-1">
-          <label class="font-label text-xs font-bold text-on-surface-variant tracking-wider uppercase pl-1">登录账号</label>
-          <input v-model="searchFilters.username" @keyup.enter="doSearch" type="text" placeholder="输入账号检索" class="w-full bg-surface-container-low border-none rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 text-on-surface outline-none placeholder:text-outline-variant/70 transition-all font-medium" />
+          <label class="text-xs font-bold text-on-surface-variant tracking-wider uppercase pl-1">登录账号</label>
+          <input v-model="searchFilters.username" @keyup.enter="doSearch" type="text" placeholder="输入账号搜索" class="w-full bg-surface-container-low border-none rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 text-on-surface outline-none placeholder:text-outline-variant/70" />
         </div>
         <div class="space-y-1.5 md:col-span-1">
-          <label class="font-label text-xs font-bold text-on-surface-variant tracking-wider uppercase pl-1">状态</label>
-          <select v-model="searchFilters.status" @change="doSearch" class="w-full bg-surface-container-low border-none rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 text-on-surface outline-none appearance-none font-medium cursor-pointer">
+          <label class="text-xs font-bold text-on-surface-variant tracking-wider uppercase pl-1">状态</label>
+          <select v-model="searchFilters.status" @change="doSearch" class="w-full bg-surface-container-low border-none rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 text-on-surface outline-none appearance-none">
             <option value="全部">全部状态</option>
-            <option value="启用">已启用</option>
-            <option value="禁用">已禁用</option>
+            <option value="启用">启用</option>
+            <option value="禁用">禁用</option>
           </select>
         </div>
         <div class="space-y-1.5 md:col-span-1">
-          <label class="font-label text-xs font-bold text-on-surface-variant tracking-wider uppercase pl-1">所属小组</label>
-          <select v-model="searchFilters.group_name" @change="doSearch" class="w-full bg-surface-container-low border-none rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 text-on-surface outline-none appearance-none font-medium cursor-pointer">
+          <label class="text-xs font-bold text-on-surface-variant tracking-wider uppercase pl-1">所属小组</label>
+          <select v-model="searchFilters.group_name" @change="doSearch" class="w-full bg-surface-container-low border-none rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 text-on-surface outline-none appearance-none">
             <option value="全部">全部小组</option>
-            <option v-for="g in groupOptions" :key="g" :value="g">{{ g }}</option>
+            <option v-for="group in groupOptions" :key="group" :value="group">{{ group }}</option>
           </select>
         </div>
         <div class="md:col-span-1 flex gap-2">
-          <button @click="doSearch" class="flex-1 py-2.5 rounded-lg bg-primary text-on-primary font-bold text-sm active:scale-95 transition-all shadow-sm hover:shadow-md">检索</button>
+          <button @click="doSearch" class="flex-1 py-2.5 rounded-lg bg-primary text-on-primary font-bold text-sm active:scale-95 transition-all shadow-sm">搜索</button>
           <button @click="resetFilters" class="flex-1 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors font-bold text-sm border border-surface-container-high active:scale-95">重置</button>
         </div>
       </div>
 
       <div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm">
-        <!-- Table Header -->
         <div class="grid grid-cols-12 px-6 py-4 bg-surface-container-low border-b border-outline-variant/10 items-center">
-          <div class="col-span-3 text-label uppercase tracking-widest font-bold text-[10px] text-on-surface-variant">账号信息</div>
-          <div class="col-span-2 text-label uppercase tracking-widest font-bold text-[10px] text-on-surface-variant text-center">登录账号</div>
-          <div class="col-span-2 text-label uppercase tracking-widest font-bold text-[10px] text-on-surface-variant text-center">所属小组</div>
-          <div class="col-span-1 text-label uppercase tracking-widest font-bold text-[10px] text-on-surface-variant">岗位描述</div>
-          <div class="col-span-1 text-label uppercase tracking-widest font-bold text-[10px] text-on-surface-variant text-center">状态</div>
-          <div class="col-span-3 text-label uppercase tracking-widest font-bold text-[10px] text-on-surface-variant text-right">操作</div>
+          <div class="col-span-2 text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">账号信息</div>
+          <div class="col-span-2 text-[10px] uppercase tracking-widest font-bold text-on-surface-variant text-center">登录账号</div>
+          <div class="col-span-2 text-[10px] uppercase tracking-widest font-bold text-on-surface-variant text-center">所属小组</div>
+          <div class="col-span-4 text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">岗位描述</div>
+          <div class="col-span-1 text-[10px] uppercase tracking-widest font-bold text-on-surface-variant text-center">状态</div>
+          <div class="col-span-1 text-[10px] uppercase tracking-widest font-bold text-on-surface-variant text-right">操作</div>
         </div>
 
-        <!-- Loading -->
         <div v-if="loading" class="px-6 py-12 text-center text-on-surface-variant">
           <span class="material-symbols-outlined animate-spin text-2xl text-primary">progress_activity</span>
           <p class="mt-2 text-sm opacity-60">加载中...</p>
         </div>
 
-        <!-- Empty -->
         <div v-else-if="employees.length === 0" class="px-6 py-12 text-center text-on-surface-variant">
           <span class="material-symbols-outlined text-4xl opacity-30">person_off</span>
           <p class="mt-2 text-sm opacity-60">暂无匹配的账号记录</p>
         </div>
 
-        <!-- List Items -->
         <div v-else class="divide-y divide-surface-container">
           <div v-for="emp in employees" :key="emp.id" class="grid grid-cols-12 px-6 py-5 items-center hover:bg-surface-container-low transition-colors group">
-            <div class="col-span-3 flex items-center gap-4">
-              <div :class="[
-                'w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0 shadow-sm',
-                `bg-${emp.theme_color || 'primary'}/15 text-${emp.theme_color || 'primary'}`
-              ]">
+            <div class="col-span-2 flex items-center gap-4">
+              <div :class="['w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0 shadow-sm', `bg-${emp.theme_color || 'primary'}/15 text-${emp.theme_color || 'primary'}`]">
                 {{ emp.avatar_char || emp.name?.charAt(0) }}
               </div>
               <div class="min-w-0">
@@ -383,67 +360,46 @@ onMounted(() => {
             </div>
             <div class="col-span-2 text-center font-mono text-xs text-on-surface-variant">{{ emp.username }}</div>
             <div class="col-span-2 text-center">
-              <span :class="[
-                'px-2.5 py-1 text-[10px] font-bold rounded inline-block',
-                getGroupStyle(emp.group_name).bg,
-                getGroupStyle(emp.group_name).text
-              ]">{{ emp.group_name || '未分配' }}</span>
+              <span :class="['px-2.5 py-1 text-[10px] font-bold rounded inline-block', getGroupStyle(emp.group_name).bg, getGroupStyle(emp.group_name).text]">
+                {{ emp.group_name || '未分配' }}
+              </span>
             </div>
-            <div class="col-span-1 text-sm text-on-surface-variant truncate pr-2">{{ emp.job_desc || '-' }}</div>
+            <div class="col-span-4 text-sm text-on-surface-variant truncate pr-4">{{ emp.job_desc || '-' }}</div>
             <div class="col-span-1 flex justify-center">
-              <button @click="toggleStatus(emp)" :class="[
-                'flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold border transition-all active:scale-95 hover:shadow-sm w-[72px] justify-center',
-                isActive(emp.status) ? 'bg-tertiary-fixed-dim/20 text-on-tertiary-fixed-variant border-tertiary/20 hover:bg-tertiary/10' : 'bg-surface-dim text-on-surface-variant border-outline/20 hover:bg-outline/10'
-              ]">
-                <span :class="['w-1.5 h-1.5 rounded-full shrink-0', isActive(emp.status) ? 'bg-tertiary' : 'bg-outline']"></span> 
-                {{ statusLabel(emp.status) }}
+              <button @click="toggleStatus(emp)" :class="['relative inline-flex h-7 w-14 items-center rounded-full transition-colors', isActive(emp.status) ? 'bg-green-600' : 'bg-outline/30']">
+                <span :class="['inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform', isActive(emp.status) ? 'translate-x-8' : 'translate-x-1']"></span>
               </button>
             </div>
-            <div class="col-span-3 text-right flex justify-end gap-1 sm:gap-2">
-              <button @click="openDetailModal(emp)" class="text-primary hover:bg-primary/10 px-2 py-1 rounded text-xs transition-colors font-bold tracking-wide">详细</button>
+            <div class="col-span-1 text-right flex justify-end gap-1">
+              <button @click="openDetailModal(emp)" class="text-primary hover:bg-primary/10 px-2 py-1 rounded text-xs transition-colors font-bold tracking-wide">详情</button>
               <button @click="openEditModal(emp)" class="text-secondary hover:bg-secondary/10 px-2 py-1 rounded text-xs transition-colors font-bold tracking-wide">编辑</button>
               <button @click="deleteUser(emp)" class="text-error hover:bg-error/10 px-2 py-1 rounded text-xs transition-colors font-bold tracking-wide">删除</button>
             </div>
           </div>
         </div>
 
-        <!-- Table Footer / Pagination -->
         <div class="px-8 py-4 bg-surface-container-low flex justify-between items-center text-xs text-on-surface-variant border-t border-outline-variant/10">
-           <p>当前第 {{ pagination.page }} 页，共 {{ pagination.total }} 条记录</p>
+          <p>当前第 {{ pagination.page }} 页，共 {{ pagination.total }} 条记录</p>
           <div class="flex items-center gap-4">
             <button @click="goToPage(pagination.page - 1)" :disabled="pagination.page <= 1" :class="['flex items-center gap-1 transition-colors', pagination.page <= 1 ? 'opacity-50 cursor-not-allowed' : 'hover:text-primary cursor-pointer']">
-               <span class="material-symbols-outlined text-sm">chevron_left</span> 上一页
+              <span class="material-symbols-outlined text-sm">chevron_left</span> 上一页
             </button>
             <div class="flex gap-1">
-              <span v-for="p in pageNumbers" :key="p"
-                @click="goToPage(p)"
-                :class="[
-                  'w-6 h-6 flex items-center justify-center rounded font-bold cursor-pointer transition-colors',
-                  p === pagination.page ? 'bg-primary text-white shadow-sm' : 'hover:bg-surface-dim'
-                ]">{{ p }}</span>
+              <span v-for="page in pageNumbers" :key="page" @click="goToPage(page)" :class="['w-6 h-6 flex items-center justify-center rounded font-bold cursor-pointer transition-colors', page === pagination.page ? 'bg-primary text-white shadow-sm' : 'hover:bg-surface-dim']">
+                {{ page }}
+              </span>
             </div>
             <button @click="goToPage(pagination.page + 1)" :disabled="pagination.page >= totalPages" :class="['flex items-center gap-1 transition-colors', pagination.page >= totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:text-primary cursor-pointer']">
-              下一页 <span class="material-symbols-outlined text-sm">chevron_right</span>
+              下一页<span class="material-symbols-outlined text-sm">chevron_right</span>
             </button>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Floating FAB -->
-    <button @click="openAddModal" class="fixed bottom-8 right-8 w-14 h-14 bg-gradient-to-br from-primary to-primary-container text-white rounded-full shadow-2xl flex items-center justify-center active:scale-95 transition-transform group z-40">
-       <span class="material-symbols-outlined text-2xl">person_add</span>
-      <span class="absolute right-full mr-4 bg-inverse-surface text-inverse-on-surface text-[10px] font-bold px-3 py-1.5 rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">快速添加账号</span>
-    </button>
-    
-    <!-- ============================================ -->
-    <!-- Add / Edit Account Modal (shared form)      -->
-    <!-- ============================================ -->
     <div v-if="showFormModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div class="absolute inset-0 bg-scrim/40 backdrop-blur-sm" @click="showFormModal = false" style="background-color: rgba(0,0,0,0.5);"></div>
-      
       <div class="relative bg-surface-container-lowest rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-        <!-- Modal Header -->
         <div class="px-6 py-5 border-b border-outline-variant/20 flex justify-between items-center bg-surface-container-low/50">
           <h3 class="font-headline text-xl font-bold text-primary flex items-center gap-2">
             <span class="material-symbols-outlined">{{ formIcon }}</span>
@@ -453,56 +409,43 @@ onMounted(() => {
             <span class="material-symbols-outlined text-sm">close</span>
           </button>
         </div>
-        
-        <!-- Modal Body -->
+
         <div class="p-6 space-y-4">
           <div class="space-y-1.5">
-            <label class="font-label text-xs font-bold text-on-surface-variant tracking-wider uppercase pl-1">姓名 <span class="text-error">*</span></label>
-            <input v-model="formData.name" type="text" placeholder="输入真实姓名（首字将作为头像文字）" class="w-full bg-surface-container-low border-none rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 text-on-surface outline-none placeholder:text-outline-variant/70 transition-all font-medium" />
+            <label class="text-xs font-bold text-on-surface-variant tracking-wider uppercase pl-1">姓名 <span class="text-error">*</span></label>
+            <input v-model="formData.name" type="text" placeholder="输入真实姓名" class="w-full bg-surface-container-low border-none rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 text-on-surface outline-none placeholder:text-outline-variant/70" />
           </div>
-          
+
           <div class="grid grid-cols-2 gap-4">
             <div class="space-y-1.5">
-              <label class="font-label text-xs font-bold text-on-surface-variant tracking-wider uppercase pl-1">登录账号 <span class="text-error">*</span></label>
-              <input v-model="formData.username" type="text" placeholder="输入登录账号" class="w-full bg-surface-container-low border-none rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 text-on-surface outline-none placeholder:text-outline-variant/70 transition-all font-medium" />
+              <label class="text-xs font-bold text-on-surface-variant tracking-wider uppercase pl-1">登录账号 <span class="text-error">*</span></label>
+              <input v-model="formData.username" type="text" placeholder="输入登录账号" class="w-full bg-surface-container-low border-none rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 text-on-surface outline-none placeholder:text-outline-variant/70" />
             </div>
             <div class="space-y-1.5">
-              <label class="font-label text-xs font-bold text-on-surface-variant tracking-wider uppercase pl-1">
+              <label class="text-xs font-bold text-on-surface-variant tracking-wider uppercase pl-1">
                 {{ formMode === 'add' ? '登录密码' : '重置密码' }}
                 <span v-if="formMode === 'add'" class="text-error">*</span>
               </label>
-              <input v-model="formData.password" type="password" :placeholder="formMode === 'add' ? '请输入至少8位密码' : '留空则不修改'" class="w-full bg-surface-container-low border-none rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 text-on-surface outline-none placeholder:text-outline-variant/70 transition-all font-medium" />
-            </div>
-          </div>
-          
-          <div class="grid grid-cols-2 gap-4">
-            <div class="space-y-1.5">
-              <label class="font-label text-xs font-bold text-on-surface-variant tracking-wider uppercase pl-1">所属小组</label>
-              <select v-model="formData.group_name" class="w-full bg-surface-container-low border-none rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 text-on-surface outline-none appearance-none font-medium cursor-pointer">
-                <option v-for="g in groupOptions" :key="g" :value="g">{{ g }}</option>
-              </select>
-            </div>
-            <div class="space-y-1.5">
-               <label class="font-label text-xs font-bold text-on-surface-variant tracking-wider uppercase pl-1">岗位描述</label>
-               <input v-model="formData.job_desc" type="text" placeholder="例如：高级前端开发" class="w-full bg-surface-container-low border-none rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 text-on-surface outline-none placeholder:text-outline-variant/70 transition-all font-medium" />
+              <input v-model="formData.password" type="password" :placeholder="formMode === 'add' ? '请输入密码' : '留空则不修改'" class="w-full bg-surface-container-low border-none rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 text-on-surface outline-none placeholder:text-outline-variant/70" />
             </div>
           </div>
 
-          <!-- Avatar char preview -->
-          <div v-if="formData.name" class="flex items-center gap-3 p-3 bg-surface-container-low rounded-lg">
-            <div class="w-10 h-10 rounded-full bg-primary/15 text-primary flex items-center justify-center text-sm font-bold shadow-sm">
-              {{ formData.name.charAt(0) }}
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-1.5">
+              <label class="text-xs font-bold text-on-surface-variant tracking-wider uppercase pl-1">所属小组</label>
+              <select v-model="formData.group_name" class="w-full bg-surface-container-low border-none rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 text-on-surface outline-none appearance-none">
+                <option v-for="group in groupOptions" :key="group" :value="group">{{ group }}</option>
+              </select>
             </div>
-            <div>
-              <p class="text-xs text-on-surface-variant">头像文字预览</p>
-              <p class="text-sm font-bold text-on-surface">将自动截取「{{ formData.name.charAt(0) }}」作为头像缩写</p>
+            <div class="space-y-1.5">
+              <label class="text-xs font-bold text-on-surface-variant tracking-wider uppercase pl-1">岗位描述</label>
+              <input v-model="formData.job_desc" type="text" placeholder="例如：高级前端开发" class="w-full bg-surface-container-low border-none rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 text-on-surface outline-none placeholder:text-outline-variant/70" />
             </div>
           </div>
         </div>
-        
-        <!-- Modal Footer -->
+
         <div class="px-6 py-5 bg-surface-container-lowest border-t border-outline-variant/10 flex justify-end gap-3">
-          <button @click="showFormModal = false" class="px-5 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low font-bold text-sm transition-colors transform active:scale-95">
+          <button @click="showFormModal = false" class="px-5 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low font-bold text-sm transition-colors active:scale-95">
             取消
           </button>
           <button @click="submitForm" :disabled="!isFormValid" class="px-6 py-2.5 rounded-lg bg-primary text-on-primary font-bold text-sm shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all">
@@ -512,14 +455,9 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- ============================================ -->
-    <!-- User Detail Modal                            -->
-    <!-- ============================================ -->
     <div v-if="showDetailModal && detailUser" class="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div class="absolute inset-0 bg-scrim/40 backdrop-blur-sm" @click="showDetailModal = false" style="background-color: rgba(0,0,0,0.5);"></div>
-      
       <div class="relative bg-surface-container-lowest rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
-        <!-- Header -->
         <div class="px-6 py-5 border-b border-outline-variant/20 flex justify-between items-center bg-surface-container-low/50">
           <h3 class="font-headline text-xl font-bold text-primary flex items-center gap-2">
             <span class="material-symbols-outlined">badge</span>
@@ -530,32 +468,17 @@ onMounted(() => {
           </button>
         </div>
 
-        <!-- Body -->
         <div class="p-6 space-y-5">
-          <!-- Profile header -->
           <div class="flex items-center gap-4 p-4 bg-surface-container-low rounded-xl">
-            <div :class="[
-              'w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold shadow-md',
-              `bg-${detailUser.theme_color || 'primary'}/15 text-${detailUser.theme_color || 'primary'}`
-            ]">
+            <div :class="['w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold shadow-md', `bg-${detailUser.theme_color || 'primary'}/15 text-${detailUser.theme_color || 'primary'}`]">
               {{ detailUser.avatar_char || detailUser.name?.charAt(0) }}
             </div>
             <div>
               <p class="text-lg font-bold text-on-surface">{{ detailUser.name }}</p>
               <p class="text-sm text-on-surface-variant">{{ detailUser.job_desc || '暂无岗位描述' }}</p>
-              <div class="flex items-center gap-2 mt-1">
-                <span :class="[
-                  'flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold',
-                  detailUser.status === 1 ? 'bg-tertiary/10 text-tertiary' : 'bg-outline/10 text-outline'
-                ]">
-                  <span :class="['w-1.5 h-1.5 rounded-full', detailUser.status === 1 ? 'bg-tertiary' : 'bg-outline']"></span>
-                  {{ statusLabel(detailUser.status) }}
-                </span>
-              </div>
             </div>
           </div>
 
-          <!-- Detail fields -->
           <div class="grid grid-cols-2 gap-4">
             <div class="p-3 bg-surface-container-low/60 rounded-lg">
               <p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">系统 ID</p>
@@ -584,7 +507,6 @@ onMounted(() => {
           </div>
         </div>
 
-        <!-- Footer -->
         <div class="px-6 py-4 bg-surface-container-lowest border-t border-outline-variant/10 flex justify-end gap-3">
           <button @click="showDetailModal = false; openEditModal(detailUser)" class="px-5 py-2.5 rounded-lg bg-secondary/10 text-secondary font-bold text-sm transition-colors active:scale-95 flex items-center gap-1.5">
             <span class="material-symbols-outlined text-[16px]">edit</span>
@@ -597,5 +519,22 @@ onMounted(() => {
       </div>
     </div>
 
+    <div v-if="showConfirmModal" class="fixed inset-0 z-[70] flex items-center justify-center p-4">
+      <div class="absolute inset-0 bg-black/35 backdrop-blur-[1px]" @click="closeConfirmModal"></div>
+      <div class="relative w-full max-w-[560px] rounded-[28px] bg-white shadow-2xl overflow-hidden">
+        <div class="px-10 pt-10 pb-8">
+          <h3 class="text-[18px] font-bold text-[#c81e1e]">{{ confirmModalTitle }}</h3>
+          <p class="mt-6 text-[15px] leading-7 text-on-surface-variant">{{ confirmModalMessage }}</p>
+        </div>
+        <div class="px-10 pb-8 flex justify-end gap-4">
+          <button @click="closeConfirmModal" class="min-w-[108px] rounded-[18px] bg-surface-container-low px-6 py-3 text-[15px] font-bold text-on-surface-variant hover:bg-surface-container">
+            取消
+          </button>
+          <button @click="confirmModalSubmit" class="min-w-[108px] rounded-[18px] bg-[#c81e1e] px-6 py-3 text-[15px] font-bold text-white hover:opacity-95">
+            删除
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>

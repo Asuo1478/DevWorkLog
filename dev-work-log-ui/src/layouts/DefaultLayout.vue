@@ -1,6 +1,9 @@
 <script setup>
 import SideNavBar from '@/components/layout/SideNavBar.vue'
 import TopAppBar from '@/components/layout/TopAppBar.vue'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
 </script>
 
 <template>
@@ -13,9 +16,7 @@ import TopAppBar from '@/components/layout/TopAppBar.vue'
       <!-- Main Content Canvas -->
       <div class="flex-1 overflow-x-hidden">
         <router-view v-slot="{ Component }">
-          <transition name="fade" mode="out-in">
-            <component :is="Component" />
-          </transition>
+          <component :is="Component" :key="route.fullPath" />
         </router-view>
       </div>
 
@@ -31,16 +32,3 @@ import TopAppBar from '@/components/layout/TopAppBar.vue'
     </main>
   </div>
 </template>
-
-<style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-  transform: translateY(4px);
-}
-</style>

@@ -12,6 +12,10 @@ const projectTags = ref([])
 const shortcutTemplates = ref([])
 const editingIndex = ref(-1)
 const submitSuccessMessage = ref('')
+const confirmModalVisible = ref(false)
+const confirmModalTitle = ref('')
+const confirmModalMessage = ref('')
+const confirmModalAction = ref(null)
 
 const defaultEntry = () => ({
   id: null,
@@ -202,16 +206,41 @@ const applyShortcut = (shortcut) => {
   }
 }
 
-const removeEntry = async (index) => {
-  if (!window.confirm('确定要删除这条工作记录吗？删除后无法恢复。')) return
+const openConfirmModal = (title, message, action) => {
+  confirmModalTitle.value = title
+  confirmModalMessage.value = message
+  confirmModalAction.value = action
+  confirmModalVisible.value = true
+}
 
-  try {
-    const dbId = entries.value[index].id
-    await fetch(`/api/v1/work-logs/${dbId}`, { method: 'DELETE' })
-    await fetchLogs()
-  } catch (error) {
-    console.error(error)
+const closeConfirmModal = () => {
+  confirmModalVisible.value = false
+  confirmModalTitle.value = ''
+  confirmModalMessage.value = ''
+  confirmModalAction.value = null
+}
+
+const confirmModalSubmit = async () => {
+  if (typeof confirmModalAction.value === 'function') {
+    await confirmModalAction.value()
   }
+  closeConfirmModal()
+}
+
+const removeEntry = async (index) => {
+  openConfirmModal(
+    '删除工作记录',
+    '确认删除这条工作记录吗？',
+    async () => {
+      try {
+        const dbId = entries.value[index].id
+        await fetch(`/api/v1/work-logs/${dbId}`, { method: 'DELETE' })
+        await fetchLogs()
+      } catch (error) {
+        console.error(error)
+      }
+    }
+  )
 }
 
 const updateShortcutStatus = async (entry, isShortcut) => {
@@ -253,8 +282,13 @@ const addToShortcut = async (entry) => {
 }
 
 const removeShortcut = async (shortcut) => {
-  if (!window.confirm(`确定移除快捷登记“${shortcut.title}”吗？`)) return
-  await updateShortcutStatus(shortcut, false)
+  openConfirmModal(
+    '移除快捷登记',
+    `确认移除快捷登记“${shortcut.title}”吗？`,
+    async () => {
+      await updateShortcutStatus(shortcut, false)
+    }
+  )
 }
 
 const enforceOneDecimal = (event) => {
@@ -555,6 +589,30 @@ onMounted(() => {
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div v-if="confirmModalVisible" class="fixed inset-0 z-[70] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/35 backdrop-blur-[1px]" @click="closeConfirmModal"></div>
+    <div class="relative w-full max-w-[560px] rounded-[28px] bg-white shadow-2xl overflow-hidden">
+      <div class="px-10 pt-10 pb-8">
+        <h3 class="text-[18px] font-bold text-[#c81e1e]">{{ confirmModalTitle }}</h3>
+        <p class="mt-6 text-[15px] leading-7 text-on-surface-variant">{{ confirmModalMessage }}</p>
+      </div>
+      <div class="px-10 pb-8 flex justify-end gap-4">
+        <button
+          @click="closeConfirmModal"
+          class="min-w-[108px] rounded-[18px] bg-surface-container-low px-6 py-3 text-[15px] font-bold text-on-surface-variant hover:bg-surface-container"
+        >
+          取消
+        </button>
+        <button
+          @click="confirmModalSubmit"
+          class="min-w-[108px] rounded-[18px] bg-[#c81e1e] px-6 py-3 text-[15px] font-bold text-white hover:opacity-95"
+        >
+          删除
+        </button>
       </div>
     </div>
   </div>

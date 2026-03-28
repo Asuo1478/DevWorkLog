@@ -1,6 +1,15 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
+import LoginView from '@/views/LoginView.vue'
+import WorkSummaryView from '@/views/WorkSummaryView.vue'
+import DailyLogView from '@/views/DailyLogView.vue'
+import TeamGoalsView from '@/views/TeamGoalsView.vue'
+import WorkPlanningView from '@/views/WorkPlanningView.vue'
+import ProjectResourceBoardView from '@/views/ProjectResourceBoardView.vue'
+import RiskWarningCenterView from '@/views/RiskWarningCenterView.vue'
+import EmployeeView from '@/views/EmployeeView.vue'
+import ProfileView from '@/views/ProfileView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -8,7 +17,7 @@ const router = createRouter({
     {
       path: '/login',
       name: 'login',
-      component: () => import('@/views/LoginView.vue'),
+      component: LoginView,
       meta: { requiresAuth: false }
     },
     {
@@ -22,7 +31,7 @@ const router = createRouter({
         {
           path: 'work-summary',
           name: 'work-summary',
-          component: () => import('@/views/WorkSummaryView.vue'),
+          component: WorkSummaryView,
           meta: { requiresAuth: true }
         },
         {
@@ -38,43 +47,43 @@ const router = createRouter({
         {
           path: 'logs/daily',
           name: 'daily-log',
-          component: () => import('@/views/DailyLogView.vue'),
+          component: DailyLogView,
           meta: { requiresAuth: true }
         },
         {
           path: 'team-goals',
           name: 'team-goals',
-          component: () => import('@/views/TeamGoalsView.vue'),
+          component: TeamGoalsView,
           meta: { requiresAuth: true }
         },
         {
           path: 'work-planning',
           name: 'work-planning',
-          component: () => import('@/views/WorkPlanningView.vue'),
+          component: WorkPlanningView,
           meta: { requiresAuth: true }
         },
         {
           path: 'project-resource-board',
           name: 'project-resource-board',
-          component: () => import('@/views/ProjectResourceBoardView.vue'),
+          component: ProjectResourceBoardView,
           meta: { requiresAuth: true }
         },
         {
           path: 'risk-warning-center',
           name: 'risk-warning-center',
-          component: () => import('@/views/RiskWarningCenterView.vue'),
+          component: RiskWarningCenterView,
           meta: { requiresAuth: true }
         },
         {
           path: 'employees',
           name: 'employees',
-          component: () => import('@/views/EmployeeView.vue'),
+          component: EmployeeView,
           meta: { requiresAuth: true, requiresAdmin: true }
         },
         {
           path: 'profile',
           name: 'profile',
-          component: () => import('@/views/ProfileView.vue'),
+          component: ProfileView,
           meta: { requiresAuth: true }
         }
       ]
@@ -82,24 +91,21 @@ const router = createRouter({
   ]
 })
 
-// Navigation guard
-router.beforeEach((to, from, next) => {
+router.beforeEach((to) => {
   const authStore = useAuthStore()
   const isAuthenticated = !!authStore.user.id
   const isAdmin = authStore.isAdmin
 
   if (to.meta.requiresAuth && !isAuthenticated) {
-    // If route requires auth and user is not logged in, redirect to login
-    next('/login')
-  } else if (to.name === 'login' && isAuthenticated) {
-    // If user is already logged in and tries to access login page, redirect to daily log
-    next('/logs/daily')
-  } else if (to.meta.requiresAdmin && !isAdmin) {
-    // If route requires admin and user is not admin, redirect to daily log
-    next('/logs/daily')
-  } else {
-    // Otherwise, proceed
-    next()
+    return '/login'
+  }
+
+  if (to.name === 'login' && isAuthenticated) {
+    return '/logs/daily'
+  }
+
+  if (to.meta.requiresAdmin && !isAdmin) {
+    return '/logs/daily'
   }
 })
 
