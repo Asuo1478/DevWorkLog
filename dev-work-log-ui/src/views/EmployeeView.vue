@@ -329,12 +329,11 @@ onMounted(() => {
 
       <div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm">
         <div class="grid grid-cols-12 px-6 py-4 bg-surface-container-low border-b border-outline-variant/10 items-center">
-          <div class="col-span-2 text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">账号信息</div>
-          <div class="col-span-2 text-[10px] uppercase tracking-widest font-bold text-on-surface-variant text-center">登录账号</div>
+          <div class="col-span-3 text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">账号信息</div>
           <div class="col-span-2 text-[10px] uppercase tracking-widest font-bold text-on-surface-variant text-center">所属小组</div>
           <div class="col-span-4 text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">岗位描述</div>
           <div class="col-span-1 text-[10px] uppercase tracking-widest font-bold text-on-surface-variant text-center">状态</div>
-          <div class="col-span-1 text-[10px] uppercase tracking-widest font-bold text-on-surface-variant text-right">操作</div>
+          <div class="col-span-2 text-[10px] uppercase tracking-widest font-bold text-on-surface-variant text-right">操作</div>
         </div>
 
         <div v-if="loading" class="px-6 py-12 text-center text-on-surface-variant">
@@ -349,16 +348,15 @@ onMounted(() => {
 
         <div v-else class="divide-y divide-surface-container">
           <div v-for="emp in employees" :key="emp.id" class="grid grid-cols-12 px-6 py-5 items-center hover:bg-surface-container-low transition-colors group">
-            <div class="col-span-2 flex items-center gap-4">
+            <div class="col-span-3 flex items-center gap-4">
               <div :class="['w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0 shadow-sm', `bg-${emp.theme_color || 'primary'}/15 text-${emp.theme_color || 'primary'}`]">
                 {{ emp.avatar_char || emp.name?.charAt(0) }}
               </div>
               <div class="min-w-0">
                 <p class="font-bold text-on-surface text-sm truncate">{{ emp.name }}</p>
-                <p class="text-xs text-on-surface-variant opacity-80 truncate">ID: {{ emp.id }}</p>
+                <p class="text-xs text-on-surface-variant opacity-80 truncate">登录账号：{{ emp.username }}</p>
               </div>
             </div>
-            <div class="col-span-2 text-center font-mono text-xs text-on-surface-variant">{{ emp.username }}</div>
             <div class="col-span-2 text-center">
               <span :class="['px-2.5 py-1 text-[10px] font-bold rounded inline-block', getGroupStyle(emp.group_name).bg, getGroupStyle(emp.group_name).text]">
                 {{ emp.group_name || '未分配' }}
@@ -370,7 +368,7 @@ onMounted(() => {
                 <span :class="['inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform', isActive(emp.status) ? 'translate-x-8' : 'translate-x-1']"></span>
               </button>
             </div>
-            <div class="col-span-1 text-right flex justify-end gap-1">
+            <div class="col-span-2 text-right flex justify-end gap-2 whitespace-nowrap">
               <button @click="openDetailModal(emp)" class="text-primary hover:bg-primary/10 px-2 py-1 rounded text-xs transition-colors font-bold tracking-wide">详情</button>
               <button @click="openEditModal(emp)" class="text-secondary hover:bg-secondary/10 px-2 py-1 rounded text-xs transition-colors font-bold tracking-wide">编辑</button>
               <button @click="deleteUser(emp)" class="text-error hover:bg-error/10 px-2 py-1 rounded text-xs transition-colors font-bold tracking-wide">删除</button>

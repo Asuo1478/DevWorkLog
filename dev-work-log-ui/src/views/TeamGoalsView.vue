@@ -409,7 +409,7 @@ onMounted(async () => {
                       @click="toggleStatus(goal)"
                       :class="[
                         'relative inline-flex h-7 w-14 items-center rounded-full transition-colors',
-                        Number(goal.status) === 1 ? 'bg-primary' : 'bg-outline/30'
+                        Number(goal.status) === 1 ? 'bg-green-600' : 'bg-outline/30'
                       ]"
                       :aria-label="Number(goal.status) === 1 ? '停用目标分类' : '启用目标分类'"
                     >

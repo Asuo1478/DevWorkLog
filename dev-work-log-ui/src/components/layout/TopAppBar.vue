@@ -7,18 +7,20 @@ const authStore = useAuthStore()
 const route = useRoute()
 const router = useRouter()
 
-const isWorkSummaryPage = computed(() => route.path === '/work-summary' || route.path === '/dashboard' || route.path === '/logs')
+const isWorkSummaryPage = computed(() => (
+  route.path === '/work-summary' || route.path === '/dashboard' || route.path === '/logs'
+))
 
 const workSummaryTabs = [
   {
     key: 'dashboard',
     label: '汇总看板',
-    description: '实时掌握研发工时投入、产线工时分布与工作趋势'
+    description: '实时掌握研发工时投入、产品工时分布、周工作时长...'
   },
   {
     key: 'log-summary',
     label: '日志汇总',
-    description: '查看工作日志汇总、筛选分析与导出结果'
+    description: '工作日志汇总综合查询与导出。'
   }
 ]
 
@@ -50,13 +52,13 @@ const pageTitle = computed(() => {
 
 const pageSubtitle = computed(() => {
   const map = {
-    '/logs/daily': '为卓越研发进行精准记录。以严谨的架构清晰记录您的日常贡献',
-    '/team-goals': '围绕目标分类与月度资源配置，统一管理团队目标与协同节奏',
-    '/work-planning': '聚焦周计划与项目管理，形成从规划到执行的闭环',
-    '/project-resource-board': '统一查看目标、项目与资源投入分布，辅助资源协调',
-    '/risk-warning-center': '集中查看目标偏差、项目异常与资源风险，支撑及时处置',
-    '/employees': '管理团队成员账号、角色与状态信息',
-    '/profile': '查看个人资料并维护账号安全设置'
+    '/logs/daily': '为卓越研发进行精准记录，以清晰结构承接每日执行信息。',
+    '/team-goals': '围绕目标分类与月度资源配置，统一管理团队目标与协同节奏。',
+    '/work-planning': '聚焦周计划与项目管理，形成从规划到执行的闭环。',
+    '/project-resource-board': '统一查看目标、项目与资源投入分布，辅助资源协调。',
+    '/risk-warning-center': '集中查看目标偏差、项目异常与资源风险，支持及时处置。',
+    '/employees': '管理团队成员账号、角色与状态信息。',
+    '/profile': '查看个人资料并维护账号安全设置。'
   }
 
   return map[route.path] || ''
@@ -107,36 +109,26 @@ const pageSubtitle = computed(() => {
       </div>
     </div>
 
-    <div class="flex items-center space-x-6">
-      <div class="relative hidden lg:block">
-        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-sm">search</span>
-        <input
-          class="bg-surface-container-low border-none rounded-full py-2 pl-10 pr-4 w-64 focus:ring-2 focus:ring-primary/20 text-sm transition-all text-on-surface outline-none"
-          placeholder="全局搜索..."
-          type="text"
-        />
-      </div>
-      <div class="flex items-center space-x-3">
-        <button class="p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors relative active:scale-95">
-          <span class="material-symbols-outlined">notifications</span>
-          <span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full ring-2 ring-surface-bright"></span>
-        </button>
-        <button class="p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors active:scale-95">
-          <span class="material-symbols-outlined">help_outline</span>
-        </button>
-        <div class="h-8 w-px bg-surface-dim opacity-50 mx-1"></div>
-        <div :class="`w-9 h-9 rounded-full ring-2 ring-primary/10 shadow-sm overflow-hidden flex items-center justify-center font-bold bg-${authStore.user.theme_color}-fixed text-${authStore.user.theme_color}`">
-          <template v-if="authStore.user.avatar">
-            <img
-              :alt="authStore.user.name + ' avatar'"
-              class="w-full h-full object-cover"
-              :src="authStore.user.avatar"
-            />
-          </template>
-          <template v-else>
-            {{ authStore.user.avatarChar }}
-          </template>
-        </div>
+    <div class="flex items-center space-x-3">
+      <button class="p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors relative active:scale-95">
+        <span class="material-symbols-outlined">notifications</span>
+        <span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full ring-2 ring-surface-bright"></span>
+      </button>
+      <button class="p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors active:scale-95">
+        <span class="material-symbols-outlined">help_outline</span>
+      </button>
+      <div class="h-8 w-px bg-surface-dim opacity-50 mx-1"></div>
+      <div :class="`w-9 h-9 rounded-full ring-2 ring-primary/10 shadow-sm overflow-hidden flex items-center justify-center font-bold bg-${authStore.user.theme_color}-fixed text-${authStore.user.theme_color}`">
+        <template v-if="authStore.user.avatar">
+          <img
+            :alt="authStore.user.name + ' avatar'"
+            class="w-full h-full object-cover"
+            :src="authStore.user.avatar"
+          />
+        </template>
+        <template v-else>
+          {{ authStore.user.avatarChar }}
+        </template>
       </div>
     </div>
   </header>

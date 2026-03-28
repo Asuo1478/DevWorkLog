@@ -142,8 +142,8 @@ const projectTags = ref([
 ])
 
 const tabs = [
-  { key: 'weekly-plan', label: '周计划', description: '聚焦 `user_task` 维度的个人周规划任务管理。' },
-  { key: 'project-manage', label: '项目管理', description: '聚焦 `project_tag` 维度的项目整体计划管理。' }
+  { key: 'weekly-plan', label: '周计划' },
+  { key: 'project-manage', label: '项目管理' }
 ]
 
 const totalPlanHours = computed(() => weeklyTasks.value.reduce((sum, item) => sum + Number(item.p_hours || 0), 0))
@@ -165,11 +165,7 @@ const deviationText = (project) => Number((project.a_hours - project.p_hours).to
 <template>
   <div class="px-8 py-8 space-y-8">
     <section class="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 shadow-[0_12px_32px_rgba(0,72,141,0.04)] overflow-hidden">
-      <div class="px-6 py-5 border-b border-outline-variant/10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div>
-          <h3 class="font-manrope text-xl font-bold text-primary">工作规划</h3>
-          <p class="text-sm text-on-surface-variant mt-1">拆分“周计划”和“项目管理”，承接个人执行规划与项目整体管理。</p>
-        </div>
+      <div class="px-6 py-5 border-b border-outline-variant/10 flex flex-col lg:flex-row lg:items-center lg:justify-end gap-4">
         <div class="inline-flex p-1 bg-surface-container-low rounded-xl self-start">
           <button
             v-for="tab in tabs"
@@ -185,12 +181,6 @@ const deviationText = (project) => Number((project.a_hours - project.p_hours).to
             {{ tab.label }}
           </button>
         </div>
-      </div>
-
-      <div class="px-6 py-3 bg-surface-container-low/40 border-b border-outline-variant/10">
-        <p class="text-xs font-medium text-on-surface-variant">
-          {{ tabs.find(tab => tab.key === activeTab)?.description }}
-        </p>
       </div>
 
       <div v-if="activeTab === 'weekly-plan'" class="p-6 space-y-6">
