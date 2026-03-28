@@ -1,22 +1,22 @@
-<script setup>
+﻿<script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '../stores/auth'
 
+const authStore = useAuthStore()
 const today = new Date()
 const todayFormatted = `${today.getFullYear()}年${String(today.getMonth() + 1).padStart(2, '0')}月${String(today.getDate()).padStart(2, '0')}日`
 const isoDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
 
-const authStore = useAuthStore()
-
 const entries = ref([])
-
-const totalHours = computed(() => {
-  return entries.value.reduce((sum, item) => sum + Number(item.hours), 0)
-})
+const projectTags = ref([])
+const shortcutTemplates = ref([])
+const editingIndex = ref(-1)
+const submitSuccessMessage = ref('')
 
 const defaultEntry = () => ({
   id: null,
   product: '预售营销',
+  tagId: null,
   category: '需求开发',
   hours: 0,
   status: '进行中',
@@ -24,22 +24,60 @@ const defaultEntry = () => ({
 })
 
 const currentEntry = ref(defaultEntry())
-const editingIndex = ref(-1)
-const submitSuccessMessage = ref('')
 
-const fetchLogs = async () => {
-  if (!authStore.user.id) return
+const totalHours = computed(() => entries.value.reduce((sum, item) => sum + Number(item.hours || 0), 0))
+const activeTagOptions = computed(() => projectTags.value.filter(tag => tag.status === '进行中'))
+const selectedTag = computed(() => activeTagOptions.value.find(tag => Number(tag.tag_id) === Number(currentEntry.value.tagId)) || null)
+
+const statusClassMap = {
+  '进行中': 'bg-primary/10 text-primary border-primary/20',
+  '已完成': 'bg-tertiary/10 text-tertiary border-tertiary/20',
+  '已提测': 'bg-yellow-100 text-yellow-700 border-yellow-200',
+  '已挂起': 'bg-error/10 text-error border-error/20',
+  '已中断': 'bg-slate-200 text-slate-600 border-slate-300'
+}
+
+const ensureDefaultTag = () => {
+  if (!activeTagOptions.value.length) {
+    currentEntry.value.tagId = null
+    return
+  }
+
+  const matched = activeTagOptions.value.some(tag => Number(tag.tag_id) === Number(currentEntry.value.tagId))
+  if (!matched) {
+    currentEntry.value.tagId = activeTagOptions.value[0].tag_id
+  }
+}
+
+const fetchProjectTags = async () => {
   try {
-    const res = await fetch(`/api/v1/work-logs?startDate=${isoDate}&endDate=${isoDate}&userId=${authStore.user.id}&limit=100`)
+    const res = await fetch('/api/v1/project-tags/active')
     const json = await res.json()
     if (json.code === 200) {
-      entries.value = json.data.list.map(item => ({
+      projectTags.value = json.data || []
+      ensureDefaultTag()
+    }
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+const fetchShortcutTemplates = async () => {
+  if (!authStore.user.id) return
+
+  try {
+    const res = await fetch(`/api/v1/work-logs?userId=${authStore.user.id}&isShortcut=1&limit=20`)
+    const json = await res.json()
+    if (json.code === 200) {
+      shortcutTemplates.value = (json.data.list || []).map(item => ({
         id: item.id,
-        product: item.product_type,
-        category: item.task_category,
-        hours: item.work_hours,
-        status: item.status,
-        desc: item.description
+        title: item.shortcut_name || '快捷登记',
+        hours: Number(item.work_hours || 0),
+        desc: item.description || '',
+        tagId: item.tag_id || null,
+        category: item.task_category || currentEntry.value.category,
+        product: item.product_type || currentEntry.value.product,
+        status: item.status || currentEntry.value.status
       }))
     }
   } catch (error) {
@@ -47,11 +85,50 @@ const fetchLogs = async () => {
   }
 }
 
+const buildShortcutName = (entry) => {
+  const tagLabel = entry.tagName || activeTagOptions.value.find(tag => Number(tag.tag_id) === Number(entry.tagId))?.tag_name || ''
+  if (tagLabel && entry.category) return `${tagLabel} ${entry.category}`
+  if (tagLabel) return tagLabel
+  if (entry.category) return entry.category
+  return (entry.desc || '快捷登记').slice(0, 20)
+}
+
+const fetchLogs = async () => {
+  if (!authStore.user.id) return
+
+  try {
+    const res = await fetch(`/api/v1/work-logs?startDate=${isoDate}&endDate=${isoDate}&userId=${authStore.user.id}&limit=100`)
+    const json = await res.json()
+
+    if (json.code === 200) {
+      entries.value = json.data.list.map(item => {
+        const projectTag = item.project_tag || item.ProjectTag || null
+
+        return {
+          id: item.id,
+          tagId: item.tag_id,
+          tagName: projectTag?.tag_name || '',
+          product: item.product_type,
+          category: item.task_category,
+          hours: item.work_hours,
+          isShortcut: Number(item.is_shortcut || 0),
+          shortcutName: item.shortcut_name || '',
+          status: item.status,
+          desc: item.description || ''
+        }
+      })
+    }
+  } catch (error) {
+    console.error(error)
+  }
+}
+
 const saveEntry = async () => {
-  if (!currentEntry.value.desc || currentEntry.value.hours <= 0) return;
-  
+  if (!currentEntry.value.desc || currentEntry.value.hours <= 0) return
+
   const payload = {
     user_id: authStore.user.id,
+    tag_id: currentEntry.value.tagId || null,
     log_date: isoDate,
     product_type: currentEntry.value.product,
     task_category: currentEntry.value.category,
@@ -61,7 +138,8 @@ const saveEntry = async () => {
   }
 
   try {
-    const isEditing = editingIndex.value > -1;
+    const isEditing = editingIndex.value > -1
+
     if (isEditing) {
       const dbId = entries.value[editingIndex.value].id
       await fetch(`/api/v1/work-logs/${dbId}`, {
@@ -77,83 +155,135 @@ const saveEntry = async () => {
         body: JSON.stringify(payload)
       })
     }
-    
+
     currentEntry.value = defaultEntry()
+    ensureDefaultTag()
     await fetchLogs()
-    
     submitSuccessMessage.value = isEditing ? '修改成功' : '新增成功'
     setTimeout(() => {
       submitSuccessMessage.value = ''
     }, 3000)
-    
-  } catch(error) {
+  } catch (error) {
     console.error(error)
   }
 }
 
 const editEntry = (index) => {
-  currentEntry.value = { ...entries.value[index] }
+  const entry = entries.value[index]
+
+  currentEntry.value = {
+    id: entry.id,
+    product: entry.product || '其他',
+    tagId: entry.tagId || activeTagOptions.value[0]?.tag_id || null,
+    category: entry.category,
+    hours: Number(entry.hours),
+    status: entry.status,
+    desc: entry.desc
+  }
   editingIndex.value = index
 }
 
 const cancelEdit = () => {
   currentEntry.value = defaultEntry()
+  ensureDefaultTag()
   editingIndex.value = -1
 }
 
-const removeEntry = async (index) => {
-  if (!window.confirm("确定要彻底删除这条工作记录吗？\n该操作不可逆，删除后将无法恢复。")) {
-    return;
+const applyShortcut = (shortcut) => {
+  editingIndex.value = -1
+  currentEntry.value = {
+    ...defaultEntry(),
+    tagId: shortcut.tagId || currentEntry.value.tagId,
+    product: shortcut.product || currentEntry.value.product,
+    category: shortcut.category || currentEntry.value.category,
+    hours: shortcut.hours,
+    status: shortcut.status || currentEntry.value.status,
+    desc: shortcut.desc || currentEntry.value.desc
   }
-  
-  const dbId = entries.value[index].id
+}
+
+const removeEntry = async (index) => {
+  if (!window.confirm('确定要删除这条工作记录吗？删除后无法恢复。')) return
+
   try {
-    await fetch(`/api/v1/work-logs/${dbId}`, {
-      method: 'DELETE'
-    })
+    const dbId = entries.value[index].id
+    await fetch(`/api/v1/work-logs/${dbId}`, { method: 'DELETE' })
     await fetchLogs()
   } catch (error) {
     console.error(error)
   }
 }
 
-const enforceOneDecimal = (e) => {
-  let val = String(e.target.value);
-  if (val.includes('.')) {
-    const parts = val.split('.');
-    if (parts[1].length > 1) {
-      e.target.value = parts[0] + '.' + parts[1].substring(0, 1);
-      currentEntry.value.hours = Number(e.target.value);
-    }
+const updateShortcutStatus = async (entry, isShortcut) => {
+  try {
+    await fetch(`/api/v1/work-logs/${entry.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        is_shortcut: isShortcut ? 1 : 0,
+        shortcut_name: isShortcut ? (entry.shortcutName || buildShortcutName(entry)) : null
+      })
+    })
+    await Promise.all([fetchLogs(), fetchShortcutTemplates()])
+  } catch (error) {
+    console.error(error)
   }
 }
 
-onMounted(() => {
-  fetchLogs()
-})
+const addToShortcut = async (entry) => {
+  const defaultName = entry.shortcutName || buildShortcutName(entry)
+  const shortcutName = window.prompt('请输入快捷登记名称', defaultName)
+  if (shortcutName === null) return
+
+  const trimmedName = shortcutName.trim()
+  if (!trimmedName) {
+    window.alert('快捷登记名称不能为空')
+    return
+  }
+
+  await fetch(`/api/v1/work-logs/${entry.id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      is_shortcut: 1,
+      shortcut_name: trimmedName
+    })
+  })
+  await Promise.all([fetchLogs(), fetchShortcutTemplates()])
+}
+
+const removeShortcut = async (shortcut) => {
+  if (!window.confirm(`确定移除快捷登记“${shortcut.title}”吗？`)) return
+  await updateShortcutStatus(shortcut, false)
+}
+
+const enforceOneDecimal = (event) => {
+  const value = String(event.target.value)
+  if (!value.includes('.')) return
+
+  const parts = value.split('.')
+  if (parts[1].length > 1) {
+    event.target.value = `${parts[0]}.${parts[1].slice(0, 1)}`
+    currentEntry.value.hours = Number(event.target.value)
+  }
+}
 
 const exportData = () => {
   if (!authStore.user.id) return
   window.location.href = `/api/v1/work-logs/export?startDate=${isoDate}&endDate=${isoDate}&userId=${authStore.user.id}`
 }
+
+onMounted(() => {
+  fetchProjectTags()
+  fetchShortcutTemplates()
+  fetchLogs()
+})
 </script>
 
 <template>
   <div class="px-12 py-8 max-w-6xl mx-auto pb-32">
-    <!-- Header Section: Editorial Style -->
-    <div class="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-      <div>
-        <h2 class="font-headline text-5xl font-extrabold tracking-tight text-primary mb-2">每日工作登记.</h2>
-        <p class="font-body text-on-surface-variant text-lg max-w-2xl">为卓越研发进行精准记录。以严谨的架构清晰记录您的日常贡献。</p>
-      </div>
-    </div>
-
-    <!-- Bento Layout Container -->
     <div class="grid grid-cols-12 gap-8">
-      
-      <!-- Left Column: Pre-filled Info -->
       <div class="col-span-12 lg:col-span-3 space-y-6">
-        <!-- Date Block -->
         <div class="p-6 rounded-xl bg-surface-container-low/50 shadow-sm flex flex-col gap-4 border border-outline-variant/10">
           <div>
             <span class="font-label text-[10px] font-bold uppercase tracking-[0.15em] text-outline block mb-1">填报日期</span>
@@ -165,17 +295,16 @@ const exportData = () => {
               <span class="text-[10px] font-bold uppercase tracking-wider">填报规范</span>
             </div>
             <ul class="text-[10px] space-y-1.5 text-on-surface-variant leading-relaxed">
-              <li class="flex gap-1.5"><span>•</span> 每日工时建议：8.0 - 10.0h</li>
-              <li class="flex gap-1.5"><span>•</span> 填报条目建议：不超过5条</li>
+              <li class="flex gap-1.5"><span>•</span> 每日工时建议：1.0 - 10.0h</li>
+              <li class="flex gap-1.5"><span>•</span> 填报条目建议：不超过 5 条</li>
               <li class="flex gap-1.5"><span>•</span> 最小工时单位：0.5h</li>
             </ul>
           </div>
         </div>
 
-        <!-- Summary Card -->
         <div class="p-6 rounded-xl bg-primary text-on-primary shadow-xl relative overflow-hidden">
           <div class="absolute -right-4 -bottom-4 opacity-10 pointer-events-none">
-             <span class="material-symbols-outlined text-8xl">analytics</span>
+            <span class="material-symbols-outlined text-8xl">analytics</span>
           </div>
           <div class="flex justify-between items-center mb-4 relative z-10">
             <span class="px-2 py-1 bg-white/20 rounded md text-[10px] font-bold tracking-widest uppercase">当日合计</span>
@@ -188,15 +317,49 @@ const exportData = () => {
             <div class="h-full bg-white transition-all duration-300" :style="`width: ${Math.min((totalHours / 10) * 100, 100)}%`"></div>
           </div>
         </div>
+
+        <div class="p-6 rounded-xl bg-surface-container-low/60 shadow-sm border border-outline-variant/10">
+          <div class="flex items-center gap-2 mb-4">
+            <span class="material-symbols-outlined text-primary text-[18px]">deployed_code</span>
+            <h4 class="font-headline text-base font-bold text-on-surface">活跃项目 Tag</h4>
+          </div>
+          <div class="space-y-3">
+            <button
+              v-for="tag in activeTagOptions"
+              :key="tag.tag_id"
+              @click="currentEntry.tagId = tag.tag_id"
+              :class="[
+                'w-full text-left rounded-xl border px-4 py-3 transition-all',
+                Number(currentEntry.tagId) === Number(tag.tag_id)
+                  ? 'bg-white border-primary/30 shadow-sm'
+                  : 'bg-surface-container-lowest border-outline-variant/10 hover:border-primary/20'
+              ]"
+            >
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-sm font-bold text-on-surface">{{ tag.tag_name }}</span>
+                <span class="px-2 py-0.5 text-[10px] font-bold rounded bg-primary/10 text-primary">{{ tag.status }}</span>
+              </div>
+              <div class="mt-2">
+                <div class="flex items-center justify-between text-[11px] text-on-surface-variant mb-1">
+                  <span>进度</span>
+                  <span>{{ Number(tag.progress_rate || 0).toFixed(0) }}%</span>
+                </div>
+                <div class="h-2 rounded-full bg-surface-container overflow-hidden">
+                  <div
+                    class="h-full bg-primary rounded-full transition-all duration-300"
+                    :style="`width: ${Math.min(Number(tag.progress_rate || 0), 100)}%`"
+                  ></div>
+                </div>
+              </div>
+            </button>
+          </div>
+        </div>
       </div>
 
-      <!-- Right Column: Interactive Log Forms & List -->
       <div class="col-span-12 lg:col-span-9 space-y-6">
-        
-        <!-- Form Area (Always 1) -->
         <div class="p-8 rounded-xl bg-surface-container-lowest shadow-sm shadow-primary/5 hover:shadow-md transition-shadow border border-outline-variant/10 relative">
           <div class="absolute top-0 left-0 w-1.5 h-full bg-primary rounded-l-xl"></div>
-          
+
           <div class="flex justify-between items-center mb-6">
             <div class="flex items-center gap-2">
               <h3 class="font-headline text-lg font-bold text-on-surface flex items-center gap-2">
@@ -204,14 +367,13 @@ const exportData = () => {
                 {{ editingIndex > -1 ? '编辑工作项' : '添加新工作项' }}
               </h3>
             </div>
-            <!-- Limit warning indicator -->
             <span v-if="entries.length >= 5 && editingIndex === -1" class="text-xs text-error font-bold flex items-center gap-1">
               <span class="material-symbols-outlined text-sm">warning</span>
               条目数达到建议上限
             </span>
           </div>
 
-          <div class="grid grid-cols-2 gap-6 mb-5">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-5">
             <div class="space-y-1.5">
               <label class="font-label text-[10px] font-bold uppercase tracking-widest text-outline">关联产品</label>
               <select v-model="currentEntry.product" class="w-full bg-surface-container-low border-none rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 appearance-none font-medium text-on-surface outline-none cursor-pointer hover:bg-surface-container transition-colors">
@@ -238,7 +400,13 @@ const exportData = () => {
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-6 mb-5">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-5">
+            <div class="space-y-1.5">
+              <label class="font-label text-[10px] font-bold uppercase tracking-widest text-outline">所属项目 TAG</label>
+              <select v-model="currentEntry.tagId" class="w-full bg-surface-container-low border-none rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 appearance-none font-medium text-on-surface outline-none cursor-pointer hover:bg-surface-container transition-colors">
+                <option v-for="tag in activeTagOptions" :key="tag.tag_id" :value="tag.tag_id">{{ tag.tag_name }}</option>
+              </select>
+            </div>
             <div class="space-y-1.5">
               <label class="font-label text-[10px] font-bold uppercase tracking-widest text-outline">投入工时 (h) <span class="text-error">*</span></label>
               <div class="relative">
@@ -263,13 +431,11 @@ const exportData = () => {
           </div>
 
           <div class="flex justify-between items-center pt-2 h-10">
-            <!-- Success indicator -->
             <div class="text-tertiary text-xs font-bold px-3 py-1.5 bg-tertiary/10 rounded flex items-center gap-1.5 transition-opacity duration-300" :class="submitSuccessMessage ? 'opacity-100' : 'opacity-0 pointer-events-none'">
               <span class="material-symbols-outlined text-[14px]">check_circle</span>
               {{ submitSuccessMessage }}
             </div>
 
-            <!-- Buttons -->
             <div class="flex justify-end gap-3">
               <button v-if="editingIndex > -1" @click="cancelEdit" class="px-5 py-2.5 rounded-lg border border-outline-variant/30 text-on-surface hover:bg-surface-container transition-colors font-bold text-xs">
                 取消编辑
@@ -282,10 +448,42 @@ const exportData = () => {
           </div>
         </div>
 
-        <!-- Spacer -->
+        <div class="px-5 py-3 rounded-xl bg-surface-container-lowest shadow-sm border border-outline-variant/10">
+          <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="material-symbols-outlined text-primary text-[18px]">bolt</span>
+              <h3 class="font-headline text-sm font-bold text-on-surface">快捷登记</h3>
+            </div>
+            <div v-if="shortcutTemplates.length > 0" class="flex-1 min-w-0 flex flex-wrap gap-2">
+              <div
+                v-for="shortcut in shortcutTemplates"
+                :key="shortcut.id"
+                class="w-full md:w-auto inline-flex items-center gap-2 rounded-full border border-outline-variant/10 bg-surface-container-low px-2 py-2"
+              >
+                <button
+                  @click="applyShortcut(shortcut)"
+                  class="inline-flex items-center gap-3 rounded-full px-2 py-0.5 text-left hover:bg-white transition-all"
+                >
+                  <span class="font-bold text-sm text-on-surface">{{ shortcut.title }}</span>
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary">{{ shortcut.hours }}h</span>
+                </button>
+                <button
+                  @click="removeShortcut(shortcut)"
+                  class="inline-flex h-5 w-5 items-center justify-center rounded-full text-on-surface-variant hover:bg-error/10 hover:text-error"
+                  title="移除快捷登记"
+                >
+                  <span class="material-symbols-outlined text-[12px]">close</span>
+                </button>
+              </div>
+            </div>
+            <p v-else class="text-sm text-on-surface-variant">
+              当前无日志快捷引用，你可以通过“当日已填报记录”列表的⚡操作完成添加。
+            </p>
+          </div>
+        </div>
+
         <div class="h-2"></div>
 
-        <!-- Compact List Area -->
         <div v-if="entries.length > 0" class="space-y-4">
           <div class="flex justify-between items-center mb-4">
             <h4 class="font-label text-xs font-bold text-outline uppercase tracking-widest pl-1 flex items-center gap-2">
@@ -297,35 +495,55 @@ const exportData = () => {
               <span>导出数据</span>
             </button>
           </div>
-          
+
           <div class="bg-surface-container-lowest rounded-xl overflow-hidden border border-outline-variant/10 shadow-sm">
             <div class="divide-y divide-outline-variant/10">
-              <div v-for="(item, index) in entries" :key="item.id" 
-                   :class="['p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4 transition-colors group',
-                            editingIndex === index ? 'bg-primary/5 border-l-4 border-l-primary' : 'hover:bg-surface-container-low border-l-4 border-transparent']">
-                
-                <!-- Number indicator -->
+              <div
+                v-for="(item, index) in entries"
+                :key="item.id"
+                :class="[
+                  'p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4 transition-colors group',
+                  editingIndex === index ? 'bg-primary/5 border-l-4 border-l-primary' : 'hover:bg-surface-container-low border-l-4 border-transparent'
+                ]"
+              >
                 <div class="hidden sm:flex w-6 h-6 shrink-0 rounded-full bg-surface-container-high items-center justify-center text-[10px] font-bold text-on-surface-variant font-mono">
                   {{ entries.length - index }}
                 </div>
-                
-                <!-- Content Area -->
+
                 <div class="flex-1 min-w-0 grid grid-cols-12 gap-3 sm:gap-4 items-start sm:items-center">
                   <div class="col-span-12 sm:col-span-3 flex flex-wrap items-center gap-1.5 shrink-0">
-                    <span class="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded" title="关联产品">{{ item.product }}</span>
-                    <span class="px-2 py-0.5 bg-secondary/10 text-secondary text-[10px] font-bold rounded" title="任务类别">{{ item.category }}</span>
+                    <span v-if="item.tagName" class="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded">{{ item.tagName }}</span>
+                    <span class="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded">{{ item.product }}</span>
+                    <span class="px-2 py-0.5 bg-secondary/10 text-secondary text-[10px] font-bold rounded">{{ item.category }}</span>
                   </div>
                   <div class="col-span-12 sm:col-span-7 text-sm text-on-surface line-clamp-2 sm:truncate leading-relaxed">
-                    <span class="opacity-70 text-[10px] mr-1.5 border border-outline-variant/30 rounded px-1">{{ item.status }}</span> 
                     {{ item.desc }}
                   </div>
-                  <div class="col-span-12 sm:col-span-2 text-left sm:text-right flex items-center sm:justify-end gap-2">
-                    <span class="text-sm font-bold text-primary font-mono bg-white px-2 py-0.5 rounded border border-outline-variant/10 shadow-sm">{{ Number(item.hours).toFixed(1) }}h</span>
+                  <div class="col-span-12 sm:col-span-2 text-left sm:text-right">
+                    <div class="flex flex-col gap-1 sm:items-end">
+                      <span
+                        :class="[
+                          'text-[10px] border rounded px-1.5 py-0.5 w-fit font-medium',
+                          statusClassMap[item.status] || 'bg-slate-100 text-slate-600 border-slate-200'
+                        ]"
+                      >
+                        {{ item.status }}
+                      </span>
+                      <span class="text-sm font-bold text-primary font-mono bg-white px-2 py-0.5 rounded border border-outline-variant/10 shadow-sm">
+                        {{ Number(item.hours).toFixed(1) }}h
+                      </span>
+                    </div>
                   </div>
                 </div>
 
-                <!-- Actions -->
                 <div class="flex items-center gap-1 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity justify-end border-t sm:border-t-0 border-outline-variant/10 pt-2 sm:pt-0 mt-2 sm:mt-0">
+                  <button
+                    @click="addToShortcut(item)"
+                    class="p-2 text-primary hover:bg-primary/10 rounded-md transition-colors flex items-center justify-center"
+                    :title="item.isShortcut ? '已加入快捷登记' : '加入快捷登记'"
+                  >
+                    <span class="material-symbols-outlined text-[18px]">{{ item.isShortcut ? 'bolt' : 'offline_bolt' }}</span>
+                  </button>
                   <button @click="editEntry(index)" :disabled="editingIndex === index" class="p-2 text-primary hover:bg-primary/10 rounded-md transition-colors disabled:opacity-50 flex items-center justify-center">
                     <span class="material-symbols-outlined text-[18px]">edit</span>
                   </button>
@@ -337,8 +555,9 @@ const exportData = () => {
             </div>
           </div>
         </div>
-
       </div>
     </div>
   </div>
 </template>
+
+

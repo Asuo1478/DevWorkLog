@@ -1,4 +1,4 @@
-const { DataTypes } = require('sequelize');
+﻿const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
 const DevWorkLog = sequelize.define('dev_work_log', {
@@ -12,6 +12,11 @@ const DevWorkLog = sequelize.define('dev_work_log', {
     type: DataTypes.BIGINT,
     allowNull: true,
     comment: '员工用户ID'
+  },
+  tag_id: {
+    type: DataTypes.BIGINT,
+    allowNull: true,
+    comment: '项目TagID'
   },
   log_date: {
     type: DataTypes.DATEONLY,
@@ -42,6 +47,16 @@ const DevWorkLog = sequelize.define('dev_work_log', {
     type: DataTypes.STRING(32),
     defaultValue: '进行中',
     comment: '日志状态'
+  },
+  is_shortcut: {
+    type: DataTypes.TINYINT,
+    defaultValue: 0,
+    comment: '是否快捷模板'
+  },
+  shortcut_name: {
+    type: DataTypes.STRING(64),
+    allowNull: true,
+    comment: '快捷引用名称'
   }
 }, {
   tableName: 'dev_work_log',

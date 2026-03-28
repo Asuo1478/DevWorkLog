@@ -1,4 +1,4 @@
-const { DevWorkLog, DevBlockingAlert, SysUser, sequelize } = require('../models');
+﻿const { DevWorkLog, DevBlockingAlert, SysUser, ProjectTag, sequelize } = require('../models');
 const { Op } = require('sequelize');
 const dayjs = require('dayjs');
 const quarterOfYear = require('dayjs/plugin/quarterOfYear');
@@ -119,7 +119,6 @@ const DashboardController = {
         whereClause.user_id = userId;
       }
 
-      // Group by the selected field and sum the work_hours
       const distribution = await DevWorkLog.findAll({
         attributes: [
           [groupBy, 'name'],
@@ -256,10 +255,17 @@ const DashboardController = {
       const offset = (Number(page) - 1) * Number(pageSize);
       const { count, rows } = await DevWorkLog.findAndCountAll({
         where: whereClause,
-        include: [{
-          model: SysUser,
-          attributes: ['name', 'avatar_char', 'theme_color']
-        }],
+        include: [
+          {
+            model: SysUser,
+            attributes: ['name', 'avatar_char', 'theme_color']
+          },
+          {
+            model: ProjectTag,
+            attributes: ['tag_id', 'tag_name'],
+            required: false
+          }
+        ],
         order: [['id', 'DESC']],
         limit: Number(pageSize),
         offset
@@ -292,10 +298,17 @@ const DashboardController = {
 
       const logs = await DevWorkLog.findAll({
         where: whereClause,
-        include: [{
-          model: SysUser,
-          attributes: ['name']
-        }],
+        include: [
+          {
+            model: SysUser,
+            attributes: ['name']
+          },
+          {
+            model: ProjectTag,
+            attributes: ['tag_name'],
+            required: false
+          }
+        ],
         order: [['id', 'DESC']]
       });
 
@@ -303,13 +316,16 @@ const DashboardController = {
       res.setHeader('Content-Type', 'text/csv; charset=utf-8');
       res.setHeader('Content-Disposition', `attachment; filename=work_log_detail_${dayjs().format('YYYYMMDDHHmmss')}.csv`);
 
-      const headers = ['员工姓名', '登记日期', '关联产品', '任务类别', '投入工时(h)', '工作描述', '状态'];
+      const headers = ['员工姓名', '登记日期', '所属项目', '关联产品', '任务类别', '投入工时(h)', '工作描述', '状态'];
       const csvRows = [headers.join(',')];
 
       for (const log of (logs || [])) {
+        const user = log.sys_user || log.SysUser || null;
+        const projectTag = log.project_tag || log.ProjectTag || null;
         const row = [
-          log.sys_user ? log.sys_user.name : '未知',
+          user?.name || '未知',
           log.log_date,
+          projectTag?.tag_name || '',
           log.product_type,
           log.task_category,
           log.work_hours,
@@ -328,3 +344,4 @@ const DashboardController = {
 };
 
 module.exports = DashboardController;
+

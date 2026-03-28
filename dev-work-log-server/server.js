@@ -9,6 +9,8 @@ const errorHandler = require('./src/middlewares/errorHandler');
 const userRoutes = require('./src/routes/userRoutes');
 const workLogRoutes = require('./src/routes/workLogRoutes');
 const dashboardRoutes = require('./src/routes/dashboardRoutes');
+const projectTagRoutes = require('./src/routes/projectTagRoutes');
+const goalDefineRoutes = require('./src/routes/goalDefineRoutes');
 
 const app = express();
 
@@ -27,6 +29,8 @@ app.get('/', (req, res) => {
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/work-logs', workLogRoutes);
 app.use('/api/v1/dashboard', dashboardRoutes);
+app.use('/api/v1/project-tags', projectTagRoutes);
+app.use('/api/v1/goal-defines', goalDefineRoutes);
 
 // Error Handling (should be the last middleware)
 app.use(errorHandler);

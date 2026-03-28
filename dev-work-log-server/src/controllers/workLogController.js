@@ -1,25 +1,41 @@
-const { DevWorkLog, DevBlockingAlert, SysUser, sequelize } = require('../models');
+const { DevWorkLog, DevBlockingAlert, SysUser, ProjectTag, sequelize } = require('../models');
 const { Op } = require('sequelize');
+const dayjs = require('dayjs');
 
 const WorkLogController = {
-  // Create new log
   createLog: async (req, res, next) => {
     try {
-      const { user_id, log_date, product_type, task_category, work_hours, description, status } = req.body;
-      const log = await DevWorkLog.create({
+      const {
         user_id,
+        tag_id,
         log_date,
         product_type,
         task_category,
         work_hours,
         description,
-        status: status || '已审核'
+        status,
+        is_shortcut,
+        shortcut_name
+      } = req.body;
+
+      const log = await DevWorkLog.create({
+        user_id,
+        tag_id: tag_id || null,
+        log_date,
+        product_type,
+        task_category,
+        work_hours,
+        description,
+        status: status || '进行中',
+        is_shortcut: is_shortcut || 0,
+        shortcut_name: shortcut_name || null
       });
 
       if (log.status === '已挂起') {
         await DevBlockingAlert.create({
           log_id: log.id,
           user_id: log.user_id,
+          tag_id: log.tag_id,
           title: `${log.product_type || ''}-${log.task_category || ''}`.substring(0, 128),
           reason: log.description,
           priority: '一般',
@@ -34,11 +50,10 @@ const WorkLogController = {
     }
   },
 
-  // Get log list (with filters and pagination)
   getLogs: async (req, res, next) => {
     try {
-      const { page = 1, limit = 10, startDate, endDate, userName, userId, productType, taskCategory } = req.query;
-      const offset = (page - 1) * limit;
+      const { page = 1, limit = 10, startDate, endDate, userName, userId, productType, taskCategory, isShortcut } = req.query;
+      const offset = (Number(page) - 1) * Number(limit);
 
       const whereClause = {};
       if (startDate && endDate) {
@@ -47,36 +62,39 @@ const WorkLogController = {
       if (userId) whereClause.user_id = userId;
       if (productType) whereClause.product_type = productType;
       if (taskCategory) whereClause.task_category = taskCategory;
-
-      const includeClause = [{
-        model: SysUser,
-        attributes: ['name', 'avatar_char', 'theme_color']
-      }];
+      if (typeof isShortcut !== 'undefined') whereClause.is_shortcut = Number(isShortcut);
 
       if (userName) {
-        // Find users matching name
-        const users = await SysUser.findAll({ where: { name: { [Op.like]: `%${userName}%` } }});
-        const userIds = users.map(u => u.id);
-        if (userIds.length > 0) {
-          whereClause.user_id = { [Op.in]: userIds };
-        } else {
-          // If no user matches, return empty
-          return res.success({ total: 0, list: [] });
+        const users = await SysUser.findAll({ where: { name: { [Op.like]: `%${userName}%` } } });
+        const userIds = users.map(user => user.id);
+        if (userIds.length === 0) {
+          return res.success({ total: 0, page: Number(page), limit: Number(limit), list: [] });
         }
+        whereClause.user_id = { [Op.in]: userIds };
       }
 
       const { count, rows } = await DevWorkLog.findAndCountAll({
         where: whereClause,
-        include: includeClause,
+        include: [
+          {
+            model: SysUser,
+            attributes: ['name', 'avatar_char', 'theme_color']
+          },
+          {
+            model: ProjectTag,
+            attributes: ['tag_id', 'tag_name', 'status'],
+            required: false
+          }
+        ],
         order: [['log_date', 'DESC'], ['create_time', 'DESC']],
-        limit: parseInt(limit),
-        offset: parseInt(offset)
+        limit: Number(limit),
+        offset
       });
 
       res.success({
         total: count,
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page: Number(page),
+        limit: Number(limit),
         list: rows
       });
     } catch (error) {
@@ -84,7 +102,6 @@ const WorkLogController = {
     }
   },
 
-  // Export log list to CSV
   exportLogs: async (req, res, next) => {
     try {
       const { startDate, endDate, userName, userId, productType, taskCategory } = req.query;
@@ -97,40 +114,46 @@ const WorkLogController = {
       if (productType) whereClause.product_type = productType;
       if (taskCategory) whereClause.task_category = taskCategory;
 
-      const includeClause = [{
-        model: SysUser,
-        attributes: ['name']
-      }];
-
       if (userName) {
-        const users = await SysUser.findAll({ where: { name: { [Op.like]: `%${userName}%` } }});
-        const userIds = users.map(u => u.id);
-        if (userIds.length > 0) {
-          whereClause.user_id = { [Op.in]: userIds };
+        const users = await SysUser.findAll({ where: { name: { [Op.like]: `%${userName}%` } } });
+        const userIds = users.map(user => user.id);
+        if (userIds.length === 0) {
+          whereClause.id = null;
         } else {
-          whereClause.id = null; // Forces empty result if user name doesn't match
+          whereClause.user_id = { [Op.in]: userIds };
         }
       }
 
       const logs = await DevWorkLog.findAll({
         where: whereClause,
-        include: includeClause,
+        include: [
+          {
+            model: SysUser,
+            attributes: ['name']
+          },
+          {
+            model: ProjectTag,
+            attributes: ['tag_name'],
+            required: false
+          }
+        ],
         order: [['log_date', 'DESC'], ['create_time', 'DESC']]
       });
 
-      const dayjs = require('dayjs');
       res.setHeader('Content-Type', 'text/csv; charset=utf-8');
       res.setHeader('Content-Disposition', `attachment; filename=work_logs_${dayjs().format('YYYYMMDDHHmmss')}.csv`);
       res.write('\ufeff');
 
-      const headers = ['员工姓名', '登记日期', '关联产品', '任务类别', '投入工时(h)', '工作描述', '状态'];
+      const headers = ['员工姓名', '登记日期', '所属项目Tag', '关联产品', '任务类别', '投入工时(h)', '工作描述', '状态'];
       const csvRows = [headers.join(',')];
 
       for (const log of logs) {
-        const userObj = log.SysUser || log.sys_user || {};
+        const user = log.sys_user || log.SysUser || null;
+        const projectTag = log.project_tag || log.ProjectTag || null;
         const row = [
-          userObj.name || '未知',
+          user?.name || '未知',
           log.log_date,
+          projectTag?.tag_name || '',
           log.product_type,
           log.task_category,
           log.work_hours,
@@ -139,30 +162,30 @@ const WorkLogController = {
         ];
         csvRows.push(row.join(','));
       }
+
       res.end(csvRows.join('\n'));
     } catch (error) {
       next(error);
     }
   },
 
-  // Update existing log
   updateLog: async (req, res, next) => {
     try {
       const { id } = req.params;
-      const updateData = req.body;
-      
       const log = await DevWorkLog.findByPk(id);
+
       if (!log) {
         return res.error('Work log not found', 404);
       }
-      
-      await log.update(updateData);
+
+      await log.update(req.body);
 
       if (log.status === '已挂起') {
         const alert = await DevBlockingAlert.findOne({ where: { log_id: log.id } });
         if (alert) {
           await alert.update({
             user_id: log.user_id,
+            tag_id: log.tag_id,
             title: `${log.product_type || ''}-${log.task_category || ''}`.substring(0, 128),
             reason: log.description,
             priority: '一般',
@@ -172,6 +195,7 @@ const WorkLogController = {
           await DevBlockingAlert.create({
             log_id: log.id,
             user_id: log.user_id,
+            tag_id: log.tag_id,
             title: `${log.product_type || ''}-${log.task_category || ''}`.substring(0, 128),
             reason: log.description,
             priority: '一般',
@@ -182,9 +206,7 @@ const WorkLogController = {
       } else {
         const alert = await DevBlockingAlert.findOne({ where: { log_id: log.id } });
         if (alert && alert.is_resolved === 0) {
-          await alert.update({
-            is_resolved: 1
-          });
+          await alert.update({ is_resolved: 1 });
         }
       }
 
@@ -194,141 +216,163 @@ const WorkLogController = {
     }
   },
 
-  // Delete log
   deleteLog: async (req, res, next) => {
     try {
       const { id } = req.params;
       const log = await DevWorkLog.findByPk(id);
-      if (log) {
-        // 联动删除：先删除从表关联的预警记录，防止外键约束触发 SET NULL 导致删空
-        await DevBlockingAlert.destroy({ where: { log_id: id } });
-        await log.destroy();
-        res.success(null, 'Work log deleted');
-      } else {
-        res.error('Work log not found', 404);
+
+      if (!log) {
+        return res.error('Work log not found', 404);
       }
+
+      await DevBlockingAlert.destroy({ where: { log_id: id } });
+      await log.destroy();
+      res.success(null, 'Work log deleted');
     } catch (error) {
       next(error);
     }
   },
 
-  /**
-   * 统一汇总接口 - 支持三种统计模式
-   * 参数:
-   *   groupBy: 'product_type' | 'task_category' | 'daily'
-   *   startDate: 起始日期 (必须)
-   *   endDate: 结束日期 (可选)
-   *   userId: 用户ID (非管理员时必须传)
-   *   isAdmin: 'true' | 'false' 是否管理员
-   *   page, limit: 分页
-   */
   getSummary: async (req, res, next) => {
     try {
-      const { 
-        groupBy = 'product_type', 
-        startDate, endDate, 
-        userId, isAdmin = 'false',
-        userName, productType, taskCategory,
-        page = 1, limit = 20 
+      const {
+        groupBy = 'product_type',
+        startDate,
+        endDate,
+        userId,
+        isAdmin = 'false',
+        userName,
+        productType,
+        taskCategory,
+        page = 1,
+        limit = 20
       } = req.query;
-      const offset = (page - 1) * parseInt(limit);
+
+      const offset = (Number(page) - 1) * Number(limit);
       const admin = isAdmin === 'true';
 
-      // ===== 1. 构建 WHERE =====
-      const whereClause = {};
+      // ── 动态构建 WHERE 条件 ──────────────────────────────────────
+      const conditions = [];
+      const replacements = {};
 
-      // 日期过滤：有 endDate 用 BETWEEN，否则用 >=
       if (startDate && endDate) {
-        whereClause.log_date = { [Op.between]: [startDate, endDate] };
+        conditions.push('w.log_date BETWEEN :startDate AND :endDate');
+        replacements.startDate = startDate;
+        replacements.endDate = endDate;
       } else if (startDate) {
-        whereClause.log_date = { [Op.gte]: startDate };
+        conditions.push('w.log_date >= :startDate');
+        replacements.startDate = startDate;
       }
 
-      // 非管理员 → 强制加 user_id 过滤
       if (!admin && userId) {
-        whereClause.user_id = userId;
+        conditions.push('w.user_id = :userId');
+        replacements.userId = userId;
       }
 
-      // 关联产品精确过滤
       if (productType) {
-        whereClause.product_type = productType;
+        conditions.push('w.product_type = :productType');
+        replacements.productType = productType;
       }
 
-      // 任务类别精确过滤
       if (taskCategory) {
-        whereClause.task_category = taskCategory;
+        conditions.push('w.task_category = :taskCategory');
+        replacements.taskCategory = taskCategory;
       }
 
-      // 员工姓名前缀模糊匹配 (b.name LIKE 'x%')
-      const includeWhere = {};
       if (userName) {
-        includeWhere.name = { [Op.like]: `${userName}%` };
+        conditions.push('u.name LIKE :userName');
+        replacements.userName = `${userName}%`;
       }
 
-      // ===== 2. 构建 SELECT attributes =====
-      const attributes = [
-        'user_id',
-        'log_date',
-        [sequelize.fn('SUM', sequelize.col('work_hours')), 'total_hours']
-      ];
+      const whereSQL = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
-      // 按关联产品 / 按任务类别 → 额外 SELECT 对应字段
-      if (groupBy === 'product_type') {
-        attributes.push('product_type');
+      // ── 动态 GROUP BY / SELECT 维度字段 ─────────────────────────
+      let dimSelect = '';
+      let dimGroup  = '';
+      let joinSQL   = '';
+
+      if (groupBy === 'tag_id') {
+        dimSelect = ', w.tag_id, pt.tag_id AS pt_tag_id, pt.tag_name';
+        dimGroup  = ', w.tag_id, pt.tag_id, pt.tag_name';
+        joinSQL   = 'LEFT JOIN project_tag pt ON w.tag_id = pt.tag_id';
+      } else if (groupBy === 'product_type') {
+        dimSelect = ', w.product_type';
+        dimGroup  = ', w.product_type';
       } else if (groupBy === 'task_category') {
-        attributes.push('task_category');
-      }
-      // daily 模式不需要额外字段
-
-      // ===== 3. 构建 GROUP BY =====
-      const groupClause = [];
-
-      // 管理员 → GROUP BY 包含 user_id
-      if (admin) {
-        groupClause.push('user_id');
+        dimSelect = ', w.task_category';
+        dimGroup  = ', w.task_category';
       }
 
-      groupClause.push('log_date');
+      const adminGroup = admin ? 'w.user_id, ' : '';
 
-      // 按关联产品 / 按任务类别 → GROUP BY 包含对应字段
-      if (groupBy === 'product_type') {
-        groupClause.push('product_type');
-      } else if (groupBy === 'task_category') {
-        groupClause.push('task_category');
-      }
+      // ── COUNT 查询（分页总数）───────────────────────────────────
+      const countSQL = `
+        SELECT COUNT(*) AS total FROM (
+          SELECT 1
+          FROM dev_work_log w
+          LEFT JOIN sys_user u ON w.user_id = u.id
+          ${joinSQL}
+          ${whereSQL}
+          GROUP BY w.user_id, w.log_date${dimGroup}, u.id, u.name, u.avatar_char, u.theme_color
+        ) t
+      `;
 
-      // Sequelize 要求 include 的主键也加入 group
-      groupClause.push('sys_user.id');
+      // ── 数据查询 ─────────────────────────────────────────────────
+      const orderBySQL = admin
+        ? 'ORDER BY w.log_date DESC, w.user_id DESC'
+        : 'ORDER BY w.log_date DESC';
 
-      // ===== 4. 构建 ORDER BY =====
-      // 非管理员: ORDER BY log_date DESC
-      // 管理员:   ORDER BY log_date DESC, user_id
-      const orderClause = [['log_date', 'DESC']];
-      if (admin) {
-        orderClause.push(['user_id', 'DESC']);
-      }
+      const dataSQL = `
+        SELECT
+          w.user_id,
+          w.log_date,
+          SUM(w.work_hours) AS total_hours
+          ${dimSelect},
+          u.id   AS \`sys_user.id\`,
+          u.name AS \`sys_user.name\`,
+          u.avatar_char  AS \`sys_user.avatar_char\`,
+          u.theme_color  AS \`sys_user.theme_color\`
+        FROM dev_work_log w
+        LEFT JOIN sys_user u ON w.user_id = u.id
+        ${joinSQL}
+        ${whereSQL}
+        GROUP BY w.user_id, w.log_date${dimGroup}, u.id, u.name, u.avatar_char, u.theme_color
+        ${orderBySQL}
+        LIMIT :limit OFFSET :offset
+      `;
 
-      // ===== 5. 执行查询 =====
-      const { count, rows } = await DevWorkLog.findAndCountAll({
-        attributes,
-        where: whereClause,
-        include: [{
-          model: SysUser,
-          attributes: ['name', 'avatar_char', 'theme_color'],
-          where: Object.keys(includeWhere).length > 0 ? includeWhere : undefined
-        }],
-        group: groupClause,
-        order: orderClause,
-        limit: parseInt(limit),
-        offset,
-        subQuery: false
-      });
+      replacements.limit  = Number(limit);
+      replacements.offset = offset;
+
+      const [[{ total }], rows] = await Promise.all([
+        sequelize.query(countSQL, { replacements, type: sequelize.QueryTypes.SELECT }),
+        sequelize.query(dataSQL,  { replacements, type: sequelize.QueryTypes.SELECT, nest: true })
+      ]);
+
+      // ── 格式化为前端期望的结构 ───────────────────────────────────
+      const list = rows.map(row => ({
+        user_id:      row.user_id,
+        log_date:     row.log_date,
+        total_hours:  row.total_hours,
+        product_type: row.product_type || null,
+        task_category:row.task_category || null,
+        tag_id:       row.tag_id || null,
+        sys_user: {
+          name:        row.sys_user?.name        || null,
+          avatar_char: row.sys_user?.avatar_char || null,
+          theme_color: row.sys_user?.theme_color || null
+        },
+        ProjectTag: row.pt_tag_id ? {
+          tag_id:   row.pt_tag_id,
+          tag_name: row.tag_name || null
+        } : null
+      }));
 
       res.success({
-        total: Array.isArray(count) ? count.length : (count || 0),
-        page: parseInt(page),
-        limit: parseInt(limit),
-        list: rows
+        total: Number(total) || 0,
+        page:  Number(page),
+        limit: Number(limit),
+        list
       });
     } catch (error) {
       next(error);

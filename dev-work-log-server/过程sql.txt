@@ -88,3 +88,8 @@ WHERE a.log_date BETWEEN '2026-03-20' AND '2026-03-27'
 GROUP BY a.user_id, a.log_date
 ORDER BY a.user_id DESC
 请您逐条确认以上12条 SQL 是否完全正确，确认后我立即严格按此逻辑重写后端和前端代码！
+
+-- 针对 dev_work_log 新增项目TagID还是快捷引用标识、名称
+alter table dev_work_log add tag_id BIGINT NOT NULL DEFAULT 0  COMMENT '项目TagID' after user_id;
+alter table dev_work_log add is_shortcut TINYINT NOT NULL DEFAULT 0 COMMENT '是否快捷引用：0=否、1=是' after status;
+alter table dev_work_log add shortcut_name VARCHAR(64) DEFAULT NULL COMMENT '快捷登记名称' after is_shortcut;

@@ -1,0 +1,223 @@
+const { Op } = require('sequelize');
+const { GoalDefine, GoalConfig, ProjectTag, sequelize } = require('../models');
+
+const parseMonth = (month) => {
+  const [year, monthValue] = String(month || '').split('-').map(Number);
+  return {
+    year: Number.isInteger(year) ? year : null,
+    month: Number.isInteger(monthValue) ? monthValue : null
+  };
+};
+
+const GoalDefineController = {
+  listGoalDefines: async (req, res, next) => {
+    try {
+      const list = await GoalDefine.findAll({
+        order: [['sort_no', 'ASC'], ['goal_id', 'ASC']]
+      });
+
+      res.success(list, 'Goal defines fetched successfully');
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  getGoalDefineDetail: async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const item = await GoalDefine.findByPk(id);
+
+      if (!item) {
+        return res.error('目标分类不存在', 404);
+      }
+
+      res.success(item, 'Goal define detail fetched successfully');
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  createGoalDefine: async (req, res, next) => {
+    try {
+      const { goal_name, goal_desc, sort_no, status, user_id } = req.body;
+
+      if (!goal_name || !String(goal_name).trim()) {
+        return res.error('目标名称不能为空', 400);
+      }
+
+      const exists = await GoalDefine.findOne({
+        where: {
+          goal_name: String(goal_name).trim()
+        }
+      });
+
+      if (exists) {
+        return res.error('目标名称已存在', 400);
+      }
+
+      const item = await GoalDefine.create({
+        goal_name: String(goal_name).trim(),
+        goal_desc: goal_desc ? String(goal_desc).trim() : null,
+        sort_no: Number(sort_no || 0),
+        status: Number(status ?? 1),
+        create_by: user_id || null,
+        update_by: user_id || null
+      });
+
+      res.success(item, '目标分类新增成功');
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  updateGoalDefine: async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const { goal_name, goal_desc, sort_no, status, user_id } = req.body;
+      const item = await GoalDefine.findByPk(id);
+
+      if (!item) {
+        return res.error('目标分类不存在', 404);
+      }
+
+      if (!goal_name || !String(goal_name).trim()) {
+        return res.error('目标名称不能为空', 400);
+      }
+
+      const exists = await GoalDefine.findOne({
+        where: {
+          goal_name: String(goal_name).trim(),
+          goal_id: { [Op.ne]: id }
+        }
+      });
+
+      if (exists) {
+        return res.error('目标名称已存在', 400);
+      }
+
+      item.goal_name = String(goal_name).trim();
+      item.goal_desc = goal_desc ? String(goal_desc).trim() : null;
+      item.sort_no = Number(sort_no || 0);
+      item.status = Number(status ?? item.status);
+      item.update_by = user_id || item.update_by;
+      await item.save();
+
+      res.success(item, '目标分类更新成功');
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  toggleGoalDefineStatus: async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const { status, user_id } = req.body;
+      const item = await GoalDefine.findByPk(id);
+
+      if (!item) {
+        return res.error('目标分类不存在', 404);
+      }
+
+      item.status = Number(status === undefined ? (item.status === 1 ? 0 : 1) : status);
+      item.update_by = user_id || item.update_by;
+      await item.save();
+
+      res.success(item, '目标分类状态更新成功');
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  deleteGoalDefine: async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const item = await GoalDefine.findByPk(id);
+
+      if (!item) {
+        return res.error('目标分类不存在', 404);
+      }
+
+      const [configCount, tagCount] = await Promise.all([
+        GoalConfig.count({ where: { goal_id: id } }),
+        ProjectTag.count({ where: { goal_id: id } })
+      ]);
+
+      if (configCount > 0 || tagCount > 0) {
+        return res.error('该目标分类已被月度资源规划或项目Tag引用，暂不允许删除', 400);
+      }
+
+      await item.destroy();
+      res.success(null, '目标分类删除成功');
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  getResourcePlan: async (req, res, next) => {
+    try {
+      const currentMonth = req.query.month || new Date().toISOString().slice(0, 7);
+      const { year, month } = parseMonth(currentMonth);
+
+      if (!year || !month) {
+        return res.error('月份格式错误，请使用 YYYY-MM', 400);
+      }
+
+      const configs = await GoalConfig.findAll({
+        where: { year, month },
+        include: [
+          {
+            model: GoalDefine,
+            attributes: ['goal_id', 'goal_name', 'goal_desc', 'sort_no', 'status']
+          }
+        ],
+        order: [
+          [GoalDefine, 'sort_no', 'ASC'],
+          ['config_id', 'ASC']
+        ]
+      });
+
+      const goalIds = configs.map((item) => item.goal_id);
+      const tags = goalIds.length
+        ? await ProjectTag.findAll({
+            where: { goal_id: goalIds },
+            attributes: ['tag_id', 'tag_name', 'goal_id', 'budget_days']
+          })
+        : [];
+
+      const list = configs.map((config) => {
+        const relatedTags = tags.filter((tag) => String(tag.goal_id) === String(config.goal_id));
+        const occupiedDays = relatedTags.reduce((sum, tag) => sum + Number(tag.budget_days || 0), 0);
+
+        return {
+          config_id: config.config_id,
+          goal_id: config.goal_id,
+          goal_name: config.goal_define?.goal_name || '-',
+          goal_desc: config.goal_define?.goal_desc || '',
+          weight: Number(config.weight || 0),
+          budget_days: Number(config.budget_days || 0),
+          remark: config.remark || '',
+          tag_count: relatedTags.length,
+          occupied_days: Number(occupiedDays.toFixed(2)),
+          remaining_days: Number((Number(config.budget_days || 0) - occupiedDays).toFixed(2)),
+          related_tag_names: relatedTags.map((tag) => tag.tag_name)
+        };
+      });
+
+      const summary = {
+        total_weight: Number(list.reduce((sum, item) => sum + Number(item.weight || 0), 0).toFixed(2)),
+        total_budget_days: Number(list.reduce((sum, item) => sum + Number(item.budget_days || 0), 0).toFixed(2)),
+        total_occupied_days: Number(list.reduce((sum, item) => sum + Number(item.occupied_days || 0), 0).toFixed(2))
+      };
+
+      res.success({
+        month: `${year}-${String(month).padStart(2, '0')}`,
+        list,
+        summary
+      }, '月度资源规划获取成功');
+    } catch (error) {
+      next(error);
+    }
+  }
+};
+
+module.exports = GoalDefineController;

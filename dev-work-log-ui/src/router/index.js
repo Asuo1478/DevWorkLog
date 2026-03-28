@@ -17,24 +17,52 @@ const router = createRouter({
       children: [
         {
           path: '',
-          redirect: '/dashboard'
+          redirect: '/logs/daily'
+        },
+        {
+          path: 'work-summary',
+          name: 'work-summary',
+          component: () => import('@/views/WorkSummaryView.vue'),
+          meta: { requiresAuth: true }
         },
         {
           path: 'dashboard',
-          name: 'dashboard',
-          component: () => import('@/views/DashboardView.vue'),
+          redirect: '/work-summary?tab=dashboard',
           meta: { requiresAuth: true }
         },
         {
           path: 'logs',
-          name: 'logs',
-          component: () => import('@/views/LogSummaryView.vue'),
+          redirect: '/work-summary?tab=log-summary',
           meta: { requiresAuth: true }
         },
         {
           path: 'logs/daily',
           name: 'daily-log',
           component: () => import('@/views/DailyLogView.vue'),
+          meta: { requiresAuth: true }
+        },
+        {
+          path: 'team-goals',
+          name: 'team-goals',
+          component: () => import('@/views/TeamGoalsView.vue'),
+          meta: { requiresAuth: true }
+        },
+        {
+          path: 'work-planning',
+          name: 'work-planning',
+          component: () => import('@/views/WorkPlanningView.vue'),
+          meta: { requiresAuth: true }
+        },
+        {
+          path: 'project-resource-board',
+          name: 'project-resource-board',
+          component: () => import('@/views/ProjectResourceBoardView.vue'),
+          meta: { requiresAuth: true }
+        },
+        {
+          path: 'risk-warning-center',
+          name: 'risk-warning-center',
+          component: () => import('@/views/RiskWarningCenterView.vue'),
           meta: { requiresAuth: true }
         },
         {
@@ -64,11 +92,11 @@ router.beforeEach((to, from, next) => {
     // If route requires auth and user is not logged in, redirect to login
     next('/login')
   } else if (to.name === 'login' && isAuthenticated) {
-    // If user is already logged in and tries to access login page, redirect to dashboard
-    next('/dashboard')
+    // If user is already logged in and tries to access login page, redirect to daily log
+    next('/logs/daily')
   } else if (to.meta.requiresAdmin && !isAdmin) {
-    // If route requires admin and user is not admin, redirect to dashboard
-    next('/dashboard')
+    // If route requires admin and user is not admin, redirect to daily log
+    next('/logs/daily')
   } else {
     // Otherwise, proceed
     next()

@@ -312,7 +312,6 @@ onMounted(() => {
     fetchChartsData();
   });
   
-  // Handle resize for echarts
   window.addEventListener('resize', () => {
     if (pieChartInstance) pieChartInstance.resize();
     if (lineChartInstance) lineChartInstance.resize();
@@ -485,18 +484,20 @@ const formatDate = (d) => d ? d.substring(0, 10) : '';
             <span class="material-symbols-outlined text-4xl text-error/30 mb-2">task_alt</span>
             <p class="text-sm text-on-surface-variant">当前时间范围内没有阻塞预警</p>
           </div>
-          <div v-for="alert in alertsList" :key="alert.id" class="bg-surface-container-lowest p-4 rounded-lg shadow-sm border-l-4 border-error">
-            <div class="flex justify-between items-center mb-2">
-              <span class="text-[10px] font-bold px-2 py-0.5 bg-error/10 text-error rounded uppercase">PENDING</span>
-              <div class="flex items-center space-x-3">
-                <span class="text-[10px] text-on-surface-variant font-medium">挂起 {{ calcDays(alert.suspend_start_time) }}天</span>
-                <button @click="resolveAlert(alert.id)" class="text-[10px] font-bold text-primary hover:text-primary/80 transition-colors uppercase cursor-pointer">
-                  <span class="material-symbols-outlined text-[12px] align-middle -mt-0.5 mr-0.5">check_circle</span>移除
-                </button>
+          <div v-else class="max-h-[248px] overflow-y-auto pr-1 space-y-4">
+            <div v-for="alert in alertsList" :key="alert.id" class="bg-surface-container-lowest p-4 rounded-lg shadow-sm border-l-4 border-error">
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-[10px] font-bold px-2 py-0.5 bg-error/10 text-error rounded uppercase">PENDING</span>
+                <div class="flex items-center space-x-3">
+                  <span class="text-[10px] text-on-surface-variant font-medium">挂起 {{ calcDays(alert.suspend_start_time) }}天</span>
+                  <button @click="resolveAlert(alert.id)" class="text-[10px] font-bold text-primary hover:text-primary/80 transition-colors uppercase cursor-pointer">
+                    <span class="material-symbols-outlined text-[12px] align-middle -mt-0.5 mr-0.5">check_circle</span>移除
+                  </button>
+                </div>
               </div>
+              <h5 class="font-bold text-sm text-on-surface mb-1">{{ alert.title }}</h5>
+              <p class="text-xs text-on-surface-variant line-clamp-2">{{ alert.reason }}</p>
             </div>
-            <h5 class="font-bold text-sm text-on-surface mb-1">{{ alert.title }}</h5>
-            <p class="text-xs text-on-surface-variant line-clamp-2">{{ alert.reason }}</p>
           </div>
           <button @click="openAllAlertsModal" class="w-full py-3 mt-4 border border-error/20 rounded-lg text-error text-sm font-bold hover:bg-error/5 transition-colors">
             查看全部阻塞任务
@@ -534,8 +535,8 @@ const formatDate = (d) => d ? d.substring(0, 10) : '';
         <table class="w-full border-collapse">
           <thead>
             <tr class="bg-surface-container-low/50">
-              <th class="text-left px-8 py-4 font-label font-bold text-[10px] text-on-surface-variant uppercase tracking-widest whitespace-nowrap">登记日期</th>
-              <th class="text-left px-8 py-4 font-label font-bold text-[10px] text-on-surface-variant uppercase tracking-widest whitespace-nowrap">研发人员</th>
+              <th class="text-left px-8 py-4 font-label font-bold text-[10px] text-on-surface-variant uppercase tracking-widest whitespace-nowrap">登记信息</th>
+              <th class="text-left px-8 py-4 font-label font-bold text-[10px] text-on-surface-variant uppercase tracking-widest whitespace-nowrap">所属项目</th>
               <th class="text-left px-8 py-4 font-label font-bold text-[10px] text-on-surface-variant uppercase tracking-widest whitespace-nowrap">所属产品 & 类别</th>
               <th class="text-left px-8 py-4 font-label font-bold text-[10px] text-on-surface-variant uppercase tracking-widest whitespace-nowrap">投入时长</th>
               <th class="text-left px-8 py-4 font-label font-bold text-[10px] text-on-surface-variant uppercase tracking-widest">工作描述</th>
@@ -544,14 +545,19 @@ const formatDate = (d) => d ? d.substring(0, 10) : '';
           </thead>
           <tbody class="divide-y divide-outline-variant/5">
             <tr v-for="(item, index) in workLogList" :key="item.id" :class="index % 2 === 1 ? 'bg-surface-container-low/20' : ''" class="hover:bg-surface-container-low/30 transition-colors">
-              <td class="px-8 py-5 text-sm font-mono text-on-surface-variant">{{ formatDate(item.log_date) }}</td>
               <td class="px-8 py-5">
                 <div class="flex items-center space-x-3">
                   <div :class="`w-8 h-8 rounded-full bg-${item.sys_user?.theme_color || 'primary'}/10 flex items-center justify-center text-${item.sys_user?.theme_color || 'primary'} font-bold text-xs shrink-0`">
                     {{ item.sys_user?.avatar_char || '?' }}
                   </div>
-                  <span class="text-sm font-bold text-on-surface">{{ item.sys_user?.name || '未知' }}</span>
+                  <div>
+                    <p class="text-sm font-bold text-on-surface">{{ item.sys_user?.name || '未知' }}</p>
+                    <p class="text-[11px] text-on-surface-variant font-mono">{{ formatDate(item.log_date) }}</p>
+                  </div>
                 </div>
+              </td>
+              <td class="px-8 py-5">
+                <p class="text-sm text-on-surface font-bold">{{ item.project_tag?.tag_name || item.ProjectTag?.tag_name || '-' }}</p>
               </td>
               <td class="px-8 py-5">
                 <p class="text-sm text-on-surface-variant font-bold">{{ item.product_type }}</p>

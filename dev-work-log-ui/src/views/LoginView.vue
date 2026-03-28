@@ -38,7 +38,7 @@ const handleLogin = async () => {
         job_desc: json.data.job_desc || '暂无岗位描述',
         theme_color: json.data.theme_color || 'primary'
       }
-      router.push('/dashboard')
+      router.push('/logs/daily')
     } else {
       errorMessage.value = json.msg || '登录失败，请检查账号和密码'
     }

@@ -39,7 +39,7 @@ const displayPeriod = computed(() => {
   return '- / -'
 })
 
-const statMode = ref('product')
+const statMode = ref('project')
 const records = ref([])
 const totalCount = ref(0)
 const currentPage = ref(1)
@@ -51,6 +51,7 @@ const filterCategory = ref('全部类别')
 
 // 统计模式到后端 groupBy 参数的映射
 const statModeToGroupBy = {
+  project: 'tag_id',
   product: 'product_type',
   category: 'task_category',
   daily: 'daily'
@@ -104,11 +105,12 @@ const fetchRecords = async () => {
     if (json.code === 200) {
       totalCount.value = json.data.total
       records.value = json.data.list.map(item => ({
-        id: `${item.user_id}-${item.log_date}-${item.product_type || item.task_category || 'daily'}`,
+        id: `${item.user_id}-${item.log_date}-${item.tag_id || item.product_type || item.task_category || 'daily'}`,
         name: item.sys_user?.name || '未知',
         char: item.sys_user?.avatar_char || '?',
         color: item.sys_user?.theme_color || 'primary',
         date: item.log_date,
+        project: item.ProjectTag?.tag_name || item.project_tag?.tag_name || '-',
         product: item.product_type || '全天耗时',
         category: item.task_category || '全天耗时',
         hours: Number(item.total_hours) || 0
@@ -224,12 +226,13 @@ const paginationInfo = computed(() => {
       <!-- View Controller -->
       <div class="flex items-center justify-between border-b border-outline-variant border-opacity-20 pb-4">
         <div class="flex p-1 bg-surface-container-high rounded-lg">
-          <button @click="statMode = 'product'" :class="statMode === 'product' ? 'bg-white text-primary font-semibold shadow-sm' : 'text-slate-500 font-medium hover:text-primary transition-colors'" class="px-6 py-1.5 text-sm rounded-md transition-all">按关联产品统计</button>
-          <button @click="statMode = 'category'" :class="statMode === 'category' ? 'bg-white text-primary font-semibold shadow-sm' : 'text-slate-500 font-medium hover:text-primary transition-colors'" class="px-6 py-1.5 text-sm rounded-md transition-all">按任务类别统计</button>
-          <button @click="statMode = 'daily'" :class="statMode === 'daily' ? 'bg-white text-primary font-semibold shadow-sm' : 'text-slate-500 font-medium hover:text-primary transition-colors'" class="px-6 py-1.5 text-sm rounded-md transition-all">按单日耗时统计</button>
+          <button @click="statMode = 'project'" :class="statMode === 'project' ? 'bg-white text-primary font-semibold shadow-sm' : 'text-slate-500 font-medium hover:text-primary transition-colors'" class="px-6 py-1.5 text-sm rounded-md transition-all">&#25353;&#20851;&#32852;&#39033;&#30446;&#32479;&#35745;</button>
+          <button @click="statMode = 'product'" :class="statMode === 'product' ? 'bg-white text-primary font-semibold shadow-sm' : 'text-slate-500 font-medium hover:text-primary transition-colors'" class="px-6 py-1.5 text-sm rounded-md transition-all">&#25353;&#20851;&#32852;&#20135;&#21697;&#32479;&#35745;</button>
+          <button @click="statMode = 'category'" :class="statMode === 'category' ? 'bg-white text-primary font-semibold shadow-sm' : 'text-slate-500 font-medium hover:text-primary transition-colors'" class="px-6 py-1.5 text-sm rounded-md transition-all">&#25353;&#20219;&#21153;&#31867;&#21035;&#32479;&#35745;</button>
+          <button @click="statMode = 'daily'" :class="statMode === 'daily' ? 'bg-white text-primary font-semibold shadow-sm' : 'text-slate-500 font-medium hover:text-primary transition-colors'" class="px-6 py-1.5 text-sm rounded-md transition-all">&#25353;&#21333;&#26085;&#32791;&#26102;&#32479;&#35745;</button>
         </div>
         <div class="flex items-center space-x-2 text-slate-400">
-          <span class="text-xs font-medium">共计 {{ totalCount }} 条记录</span>
+          <span class="text-xs font-medium">&#20849;&#35745; {{ totalCount }} &#26465;&#35760;&#24405;</span>
           <div class="w-px h-4 bg-slate-300 mx-2"></div>
           <button class="p-1 hover:bg-slate-200 rounded transition-colors"><span class="material-symbols-outlined text-[20px]">sort</span></button>
           <button class="p-1 hover:bg-slate-200 rounded transition-colors"><span class="material-symbols-outlined text-[20px]">grid_view</span></button>
@@ -242,10 +245,10 @@ const paginationInfo = computed(() => {
           <table class="w-full text-left border-collapse">
             <thead>
               <tr class="bg-surface-container-low">
-                <th class="px-8 py-5 text-[11px] font-bold text-slate-400 uppercase tracking-widest">员工姓名</th>
-                <th class="px-8 py-5 text-[11px] font-bold text-slate-400 uppercase tracking-widest">记录日期</th>
-                <th class="px-8 py-5 text-[11px] font-bold text-slate-400 uppercase tracking-widest">{{ statMode === 'product' ? '关联产品' : statMode === 'category' ? '任务类别' : '当日耗时' }}</th>
-                <th class="px-8 py-5 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-right">当日总用时 (h)</th>
+                <th class="px-8 py-5 text-[11px] font-bold text-slate-400 uppercase tracking-widest">&#21592;&#24037;&#22995;&#21517;</th>
+                <th class="px-8 py-5 text-[11px] font-bold text-slate-400 uppercase tracking-widest">&#30331;&#35760;&#26085;&#26399;</th>
+                <th class="px-8 py-5 text-[11px] font-bold text-slate-400 uppercase tracking-widest">{{ statMode === 'project' ? '\u5173\u8054\u9879\u76ee' : statMode === 'product' ? '\u5173\u8054\u4ea7\u54c1' : statMode === 'category' ? '\u4efb\u52a1\u7c7b\u522b' : '\u5f53\u65e5\u8017\u65f6' }}</th>
+                <th class="px-8 py-5 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-right">&#24403;&#26085;&#24635;&#24037;&#26102;(h)</th>
               </tr>
             </thead>
             <tbody class="divide-y-0">
@@ -266,7 +269,7 @@ const paginationInfo = computed(() => {
                 <td class="px-8 py-6 text-sm text-slate-500 font-medium">{{ rec.date }}</td>
                 <td class="px-8 py-6">
                   <span class="inline-flex items-center px-3 py-1 bg-secondary-container text-on-secondary-container text-[11px] font-bold rounded-full">
-                    {{ statMode === 'product' ? rec.product : statMode === 'category' ? rec.category : '全天耗时' }}
+                    {{ statMode === 'project' ? rec.project : statMode === 'product' ? rec.product : statMode === 'category' ? rec.category : '\u5168\u5929\u8017\u65f6' }}
                   </span>
                 </td>
                 <td class="px-8 py-6 text-sm text-right font-bold text-primary">{{ rec.hours.toFixed(1) }}</td>
