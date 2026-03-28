@@ -1,5 +1,5 @@
 const { Op } = require('sequelize');
-const { GoalDefine, GoalConfig, ProjectTag, sequelize } = require('../models');
+const { GoalDefine, GoalConfig, ProjectTag } = require('../models');
 
 const parseMonth = (month) => {
   const [year, monthValue] = String(month || '').split('-').map(Number);
@@ -214,6 +214,48 @@ const GoalDefineController = {
         list,
         summary
       }, '月度资源规划获取成功');
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  getCurrentMonthGoalOverview: async (req, res, next) => {
+    try {
+      const now = new Date();
+      const year = Number(req.query.year || now.getFullYear());
+      const month = Number(req.query.month || (now.getMonth() + 1));
+
+      if (!year || !month) {
+        return res.error('年月参数错误', 400);
+      }
+
+      const configs = await GoalConfig.findAll({
+        where: { year, month },
+        include: [
+          {
+            model: GoalDefine,
+            attributes: ['goal_id', 'goal_name', 'goal_desc', 'sort_no']
+          }
+        ],
+        order: [
+          [GoalDefine, 'sort_no', 'ASC'],
+          ['config_id', 'ASC']
+        ]
+      });
+
+      const list = configs.map((config) => ({
+        goal_id: config.goal_id,
+        goal_name: config.goal_define?.goal_name || '-',
+        goal_desc: config.goal_define?.goal_desc || '',
+        weight: Number(config.weight || 0),
+        budget_days: Number(config.budget_days || 0)
+      }));
+
+      res.success({
+        year,
+        month,
+        list
+      }, '当前月目标概览获取成功');
     } catch (error) {
       next(error);
     }
