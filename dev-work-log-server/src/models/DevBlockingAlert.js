@@ -11,12 +11,17 @@ const DevBlockingAlert = sequelize.define('dev_blocking_alert', {
   user_id: {
     type: DataTypes.BIGINT,
     allowNull: true,
-    comment: '挂起人ID冗余'
+    comment: '挂起员工ID'
+  },
+  tag_id: {
+    type: DataTypes.BIGINT,
+    allowNull: true,
+    comment: '项目TagID'
   },
   log_id: {
     type: DataTypes.BIGINT,
     allowNull: true,
-    comment: '异常引发关联日志ID'
+    comment: '异常关联日志ID'
   },
   priority: {
     type: DataTypes.STRING(16),
@@ -27,7 +32,7 @@ const DevBlockingAlert = sequelize.define('dev_blocking_alert', {
   suspend_start_time: {
     type: DataTypes.DATE,
     allowNull: false,
-    comment: '挂起起始时间'
+    comment: '挂起开始时间'
   },
   title: {
     type: DataTypes.STRING(128),
@@ -42,7 +47,7 @@ const DevBlockingAlert = sequelize.define('dev_blocking_alert', {
   is_resolved: {
     type: DataTypes.TINYINT,
     defaultValue: 0,
-    comment: '1: 已解决, 0: 未解决'
+    comment: '1=已解决 0=未解决'
   }
 }, {
   tableName: 'dev_blocking_alert',

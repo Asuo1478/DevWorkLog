@@ -189,7 +189,8 @@ const WorkLogController = {
             title: `${log.product_type || ''}-${log.task_category || ''}`.substring(0, 128),
             reason: log.description,
             priority: '一般',
-            is_resolved: 0
+            is_resolved: 0,
+            suspend_start_time: alert.suspend_start_time || new Date()
           });
         } else {
           await DevBlockingAlert.create({
