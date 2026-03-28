@@ -1,7 +1,12 @@
 <script setup>
 import { computed, ref } from 'vue'
+import { VueDatePicker } from '@vuepic/vue-datepicker'
+import '@vuepic/vue-datepicker/dist/main.css'
 
 const activeTab = ref('weekly-plan')
+const keyword = ref('')
+const statusFilter = ref('全部状态')
+const dateRange = ref(null)
 
 const weeklyTasks = ref([
   {
@@ -10,6 +15,7 @@ const weeklyTasks = ref([
     user_name: '张伟',
     tag_id: 1002,
     tag_name: '预售营销3.0',
+    plan_name: '预售配置台联调优化',
     year: 2026,
     month: 3,
     week: 4,
@@ -26,6 +32,7 @@ const weeklyTasks = ref([
     user_name: '李芳',
     tag_id: 1001,
     tag_name: '会展信息化2.0',
+    plan_name: '报名支付链路联调',
     year: 2026,
     month: 3,
     week: 4,
@@ -42,6 +49,7 @@ const weeklyTasks = ref([
     user_name: '王磊',
     tag_id: 1003,
     tag_name: '线上环境巡检优化',
+    plan_name: '巡检规则沉淀',
     year: 2026,
     month: 3,
     week: 4,
@@ -58,6 +66,7 @@ const weeklyTasks = ref([
     user_name: '张伟',
     tag_id: 1004,
     tag_name: '研发周会与知识库沉淀',
+    plan_name: '知识库规范更新',
     year: 2026,
     month: 3,
     week: 4,
@@ -75,13 +84,11 @@ const projectTags = ref([
     tag_id: 1001,
     tag_name: '会展信息化2.0',
     goal_name: '产品&项目研发',
-    owner_name: '李芳',
     year: 2026,
     start_date: '2026-03-01',
     end_date: '2026-04-15',
     budget_days: 18,
     budget_hours: 144,
-    priority: '高',
     status: '进行中',
     progress_rate: 56,
     p_hours: 42,
@@ -92,13 +99,11 @@ const projectTags = ref([
     tag_id: 1002,
     tag_name: '预售营销3.0',
     goal_name: '产品&项目研发',
-    owner_name: '张伟',
     year: 2026,
     start_date: '2026-03-05',
     end_date: '2026-04-28',
     budget_days: 16,
     budget_hours: 128,
-    priority: '高',
     status: '进行中',
     progress_rate: 41,
     p_hours: 36,
@@ -109,14 +114,12 @@ const projectTags = ref([
     tag_id: 1003,
     tag_name: '线上环境巡检优化',
     goal_name: '常规运维',
-    owner_name: '王磊',
     year: 2026,
     start_date: '2026-03-01',
     end_date: '2026-03-31',
     budget_days: 8,
     budget_hours: 64,
-    priority: '中',
-    status: '进行中',
+    status: '已完成',
     progress_rate: 72,
     p_hours: 18,
     a_hours: 16,
@@ -126,14 +129,12 @@ const projectTags = ref([
     tag_id: 1004,
     tag_name: '图表渲染性能预研',
     goal_name: '技术预研',
-    owner_name: '李芳',
     year: 2026,
     start_date: '2026-03-10',
     end_date: '2026-03-31',
     budget_days: 7,
     budget_hours: 56,
-    priority: '中',
-    status: '风险中',
+    status: '待启动',
     progress_rate: 38,
     p_hours: 14,
     a_hours: 19,
@@ -143,43 +144,156 @@ const projectTags = ref([
 
 const tabs = [
   { key: 'weekly-plan', label: '周计划' },
-  { key: 'project-manage', label: '项目管理' }
+  { key: 'project-manage', label: '项目&任务管理' }
 ]
 
-const totalPlanHours = computed(() => weeklyTasks.value.reduce((sum, item) => sum + Number(item.p_hours || 0), 0))
-const completedWeeklyTasks = computed(() => weeklyTasks.value.filter(item => item.task_status === '已完成').length)
-const activeProjects = computed(() => projectTags.value.filter(item => item.status !== '已完成' && item.status !== '已关闭').length)
-const riskProjects = computed(() => projectTags.value.filter(item => item.status === '风险中').length)
+const statusOptions = ['全部状态', '待启动', '进行中', '已完成', '已关闭']
+const projectStatusOptions = ['待启动', '进行中', '已完成', '已关闭']
+
+const keywordPlaceholder = computed(() => (
+  activeTab.value === 'weekly-plan' ? '请输入计划名称' : '请输入项目或任务名称'
+))
+
+const dateRangeDisplay = computed(() => {
+  if (!dateRange.value) return ''
+  const formatDate = (date) => date ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}` : ''
+  if (Array.isArray(dateRange.value)) {
+    const start = formatDate(dateRange.value[0])
+    const end = formatDate(dateRange.value[1])
+    if (start && end) return `${start} 至 ${end}`
+    return start
+  }
+  return formatDate(dateRange.value)
+})
+
+const inRange = (startDate, endDate) => {
+  if (!dateRange.value) return true
+  const targetStart = new Date(startDate)
+  const targetEnd = new Date(endDate)
+
+  if (Array.isArray(dateRange.value)) {
+    const [selectedStart, selectedEnd] = dateRange.value
+    if (!selectedStart || !selectedEnd) return true
+    return targetEnd >= selectedStart && targetStart <= selectedEnd
+  }
+
+  return targetStart <= dateRange.value && targetEnd >= dateRange.value
+}
+
+const filteredWeeklyTasks = computed(() => {
+  const kw = keyword.value.trim().toLowerCase()
+  return weeklyTasks.value.filter((task) => {
+    const matchedKeyword = !kw || [
+      task.plan_name,
+      task.task_content,
+      task.tag_name,
+      task.user_name
+    ].some((item) => String(item || '').toLowerCase().includes(kw))
+
+    const matchedStatus = statusFilter.value === '全部状态' || task.task_status === statusFilter.value
+    const matchedDate = inRange(task.week_start_date, task.week_end_date)
+
+    return matchedKeyword && matchedStatus && matchedDate
+  })
+})
+
+const filteredProjectTags = computed(() => {
+  const kw = keyword.value.trim().toLowerCase()
+  return projectTags.value.filter((project) => {
+    const matchedKeyword = !kw || [
+      project.tag_name,
+      project.tag_desc,
+      project.goal_name
+    ].some((item) => String(item || '').toLowerCase().includes(kw))
+
+    const matchedStatus = statusFilter.value === '全部状态' || project.status === statusFilter.value
+    const matchedDate = inRange(project.start_date, project.end_date)
+
+    return matchedKeyword && matchedStatus && matchedDate
+  })
+})
+
+const totalPlanHours = computed(() => filteredWeeklyTasks.value.reduce((sum, item) => sum + Number(item.p_hours || 0), 0))
+const completedWeeklyTasks = computed(() => filteredWeeklyTasks.value.filter((item) => item.task_status === '已完成').length)
+const activeProjects = computed(() => filteredProjectTags.value.filter((item) => item.status !== '已完成' && item.status !== '已关闭').length)
+const pendingProjects = computed(() => filteredProjectTags.value.filter((item) => item.status === '待启动').length)
+const totalProjectBudgetHours = computed(() => filteredProjectTags.value.reduce((sum, item) => sum + Number(item.budget_hours || 0), 0))
 
 const getStatusStyle = (status) => {
-  if (status === '已完成') return 'bg-primary/10 text-primary'
-  if (status === '进行中') return 'bg-secondary/10 text-secondary'
-  if (status === '待启动') return 'bg-outline/10 text-on-surface-variant'
-  if (status === '风险中') return 'bg-error/10 text-error'
+  if (status === '待启动') return 'bg-yellow-100 text-yellow-700'
+  if (status === '进行中') return 'bg-primary/10 text-primary'
+  if (status === '已完成') return 'bg-green-100 text-green-700'
+  if (status === '已关闭') return 'bg-slate-200 text-slate-600'
   return 'bg-surface-container text-on-surface-variant'
 }
 
 const deviationText = (project) => Number((project.a_hours - project.p_hours).toFixed(1))
+
+const resetFilters = () => {
+  keyword.value = ''
+  statusFilter.value = '全部状态'
+  dateRange.value = null
+}
 </script>
 
 <template>
   <div class="px-8 py-8 space-y-8">
     <section class="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 shadow-[0_12px_32px_rgba(0,72,141,0.04)] overflow-hidden">
-      <div class="px-6 py-5 border-b border-outline-variant/10 flex flex-col lg:flex-row lg:items-center lg:justify-end gap-4">
-        <div class="inline-flex p-1 bg-surface-container-low rounded-xl self-start">
-          <button
-            v-for="tab in tabs"
-            :key="tab.key"
-            @click="activeTab = tab.key"
-            :class="[
-              'px-5 py-2.5 rounded-lg text-sm font-bold transition-all',
-              activeTab === tab.key
-                ? 'bg-white text-primary shadow-sm'
-                : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-lowest/70'
-            ]"
-          >
-            {{ tab.label }}
-          </button>
+      <div class="px-6 py-5 border-b border-outline-variant/10 bg-surface-container-low/30">
+        <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <div class="inline-flex p-1 bg-surface-container-low rounded-xl self-start">
+            <button
+              v-for="tab in tabs"
+              :key="tab.key"
+              @click="activeTab = tab.key"
+              :class="[
+                'px-5 py-2.5 rounded-lg text-sm font-bold transition-all',
+                activeTab === tab.key
+                  ? 'bg-white text-primary shadow-sm'
+                  : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-lowest/70'
+              ]"
+            >
+              {{ tab.label }}
+            </button>
+          </div>
+
+          <div class="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-end xl:flex-1 xl:pl-10">
+            <input
+              v-model="keyword"
+              type="text"
+              :placeholder="keywordPlaceholder"
+              class="w-full xl:w-[220px] bg-surface-container-low border-none rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 text-on-surface outline-none placeholder:text-outline-variant/70"
+            />
+
+            <VueDatePicker
+              v-model="dateRange"
+              range
+              :enable-time-picker="false"
+              auto-apply
+            >
+              <template #trigger>
+                <button
+                  type="button"
+                  class="w-full xl:w-auto min-w-[300px] px-4 py-2.5 text-[13px] font-bold rounded-lg bg-surface-container-low text-on-surface border border-outline-variant/10 transition-all flex items-center justify-between gap-2 whitespace-nowrap"
+                >
+                  <span class="inline-flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-[16px]">edit_calendar</span>
+                    <span>起止日期</span>
+                  </span>
+                  <span class="text-on-surface-variant/80 font-medium truncate max-w-[210px] text-right">
+                    {{ dateRangeDisplay || '全部' }}
+                  </span>
+                </button>
+              </template>
+            </VueDatePicker>
+
+            <select
+              v-model="statusFilter"
+              class="w-full xl:w-[150px] bg-surface-container-low border border-outline-variant/10 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 text-on-surface outline-none appearance-none"
+            >
+              <option v-for="status in statusOptions" :key="status" :value="status">{{ status }}</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -197,7 +311,7 @@ const deviationText = (project) => Number((project.a_hours - project.p_hours).to
           </div>
           <div class="bg-surface-container-low rounded-xl p-5 border border-outline-variant/10">
             <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">计划项数</p>
-            <h4 class="text-2xl font-manrope font-extrabold text-on-surface">{{ weeklyTasks.length }}</h4>
+            <h4 class="text-2xl font-manrope font-extrabold text-on-surface">{{ filteredWeeklyTasks.length }}</h4>
             <p class="text-xs text-on-surface-variant mt-2">一人可有多条按 Tag 拆分的周计划</p>
           </div>
           <div class="bg-surface-container-low rounded-xl p-5 border border-outline-variant/10">
@@ -210,15 +324,15 @@ const deviationText = (project) => Number((project.a_hours - project.p_hours).to
         <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 shadow-sm overflow-hidden">
           <div class="px-6 py-5 border-b border-outline-variant/10">
             <h4 class="font-manrope text-lg font-bold text-on-surface">周计划任务清单</h4>
-            <p class="text-sm text-on-surface-variant mt-1">以下 Mock 数据按 `user_task` 表结构组织，并补充展示用户名与 Tag 名。</p>
+            <p class="text-sm text-on-surface-variant mt-1">以下数据按 `user_task` 结构组织，并补充展示用户名与 Tag 名。</p>
           </div>
 
-          <div class="divide-y divide-outline-variant/10">
-            <div v-for="task in weeklyTasks" :key="task.task_id" class="px-6 py-5 hover:bg-surface-container-low/40 transition-colors">
+          <div v-if="filteredWeeklyTasks.length" class="divide-y divide-outline-variant/10">
+            <div v-for="task in filteredWeeklyTasks" :key="task.task_id" class="px-6 py-5 hover:bg-surface-container-low/40 transition-colors">
               <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                 <div class="min-w-0">
                   <div class="flex flex-wrap items-center gap-2">
-                    <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-primary/10 text-primary">task_id: {{ task.task_id }}</span>
+                    <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-primary/10 text-primary">{{ task.plan_name }}</span>
                     <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-secondary/10 text-secondary">{{ task.tag_name }}</span>
                     <span :class="['px-2.5 py-1 rounded-full text-[11px] font-bold', getStatusStyle(task.task_status)]">{{ task.task_status }}</span>
                   </div>
@@ -239,6 +353,10 @@ const deviationText = (project) => Number((project.a_hours - project.p_hours).to
               </div>
             </div>
           </div>
+
+          <div v-else class="px-6 py-12 text-center text-sm text-on-surface-variant">
+            当前筛选条件下暂无周计划数据
+          </div>
         </div>
       </div>
 
@@ -246,7 +364,7 @@ const deviationText = (project) => Number((project.a_hours - project.p_hours).to
         <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
           <div class="bg-surface-container-low rounded-xl p-5 border border-outline-variant/10">
             <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">项目总数</p>
-            <h4 class="text-2xl font-manrope font-extrabold text-on-surface">{{ projectTags.length }}</h4>
+            <h4 class="text-2xl font-manrope font-extrabold text-on-surface">{{ filteredProjectTags.length }}</h4>
             <p class="text-xs text-on-surface-variant mt-2">来源字段：`project_tag.tag_id`</p>
           </div>
           <div class="bg-surface-container-low rounded-xl p-5 border border-outline-variant/10">
@@ -255,70 +373,64 @@ const deviationText = (project) => Number((project.a_hours - project.p_hours).to
             <p class="text-xs text-on-surface-variant mt-2">状态不为已完成/已关闭</p>
           </div>
           <div class="bg-surface-container-low rounded-xl p-5 border border-outline-variant/10">
-            <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">风险项目</p>
-            <h4 class="text-2xl font-manrope font-extrabold text-error">{{ riskProjects }}</h4>
-            <p class="text-xs text-on-surface-variant mt-2">用于提醒项目管理者聚焦跟进</p>
+            <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">待启动项目</p>
+            <h4 class="text-2xl font-manrope font-extrabold text-yellow-700">{{ pendingProjects }}</h4>
+            <p class="text-xs text-on-surface-variant mt-2">便于尽快推进项目启动与任务分配</p>
           </div>
           <div class="bg-surface-container-low rounded-xl p-5 border border-outline-variant/10">
             <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">Tag预算工时</p>
-            <h4 class="text-2xl font-manrope font-extrabold text-on-surface">{{ projectTags.reduce((sum, item) => sum + Number(item.budget_hours || 0), 0) }}h</h4>
+            <h4 class="text-2xl font-manrope font-extrabold text-on-surface">{{ totalProjectBudgetHours }}h</h4>
             <p class="text-xs text-on-surface-variant mt-2">字段来源：`project_tag.budget_hours`</p>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 xl:grid-cols-2 gap-5">
+        <div v-if="filteredProjectTags.length" class="grid grid-cols-1 xl:grid-cols-2 gap-5">
           <div
-            v-for="project in projectTags"
+            v-for="project in filteredProjectTags"
             :key="project.tag_id"
             class="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 shadow-sm overflow-hidden"
           >
-            <div class="px-5 py-4 border-b border-outline-variant/10 flex justify-between items-start gap-4">
-              <div>
+            <div class="px-5 py-4 border-b border-outline-variant/10 flex justify-between items-start gap-6">
+              <div class="min-w-0 flex-1">
                 <div class="flex flex-wrap items-center gap-2">
                   <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-primary/10 text-primary">{{ project.goal_name }}</span>
-                  <span :class="['px-2.5 py-1 rounded-full text-[11px] font-bold', getStatusStyle(project.status)]">{{ project.status }}</span>
                 </div>
-                <h5 class="mt-3 text-base font-bold text-on-surface">{{ project.tag_name }}</h5>
+                <h5 class="mt-3 text-base font-bold text-on-surface whitespace-nowrap overflow-hidden text-ellipsis">{{ project.tag_name }}</h5>
                 <p class="text-sm text-on-surface-variant mt-1">{{ project.tag_desc }}</p>
               </div>
-              <span class="px-3 py-1 rounded-full text-[10px] font-bold bg-surface-container-low text-on-surface-variant">
-                tag_id: {{ project.tag_id }}
-              </span>
-            </div>
-
-            <div class="p-5 grid grid-cols-2 gap-4">
-              <div class="rounded-xl bg-surface-container-low px-4 py-3">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">负责人</p>
-                <p class="text-sm font-bold text-on-surface">{{ project.owner_name }}</p>
-              </div>
-              <div class="rounded-xl bg-surface-container-low px-4 py-3">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">优先级</p>
-                <p class="text-sm font-bold text-on-surface">{{ project.priority }}</p>
-              </div>
-              <div class="rounded-xl bg-surface-container-low px-4 py-3">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">计划区间</p>
-                <p class="text-sm font-bold text-on-surface">{{ project.start_date }} 至 {{ project.end_date }}</p>
-              </div>
-              <div class="rounded-xl bg-surface-container-low px-4 py-3">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">预算</p>
-                <p class="text-sm font-bold text-on-surface">{{ project.budget_days }}人天 / {{ project.budget_hours }}h</p>
+              <div class="flex flex-col items-end gap-2 text-right shrink-0">
+                <select
+                  v-model="project.status"
+                  :class="[
+                    'px-3 py-1 rounded-full text-[11px] font-bold border outline-none appearance-none cursor-pointer',
+                    project.status === '待启动' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' : '',
+                    project.status === '进行中' ? 'bg-primary/10 text-primary border-primary/20' : '',
+                    project.status === '已完成' ? 'bg-green-100 text-green-700 border-green-200' : '',
+                    project.status === '已关闭' ? 'bg-slate-200 text-slate-600 border-slate-300' : ''
+                  ]"
+                >
+                  <option v-for="status in projectStatusOptions" :key="status" :value="status">
+                    {{ status }}
+                  </option>
+                </select>
+                <p class="text-sm font-medium text-on-surface-variant whitespace-nowrap">起止时间：{{ project.start_date }} 至 {{ project.end_date }}</p>
               </div>
             </div>
 
-            <div class="px-5 pb-5">
+            <div class="px-5 py-5">
               <div class="grid grid-cols-3 gap-3 mb-4">
                 <div class="rounded-xl bg-surface-container-low px-4 py-3">
-                  <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">P工时</p>
-                  <p class="font-manrope text-xl font-extrabold text-on-surface">{{ project.p_hours }}</p>
+                  <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">计划工时</p>
+                  <p class="font-manrope text-xl font-extrabold text-on-surface">{{ project.budget_days }}人天 / {{ project.budget_hours }}h</p>
                 </div>
                 <div class="rounded-xl bg-surface-container-low px-4 py-3">
-                  <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">A工时</p>
-                  <p class="font-manrope text-xl font-extrabold text-on-surface">{{ project.a_hours }}</p>
+                  <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">实际工时</p>
+                  <p class="font-manrope text-xl font-extrabold text-on-surface">{{ project.a_hours }}h</p>
                 </div>
                 <div class="rounded-xl bg-surface-container-low px-4 py-3">
                   <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">偏差</p>
                   <p :class="['font-manrope text-xl font-extrabold', deviationText(project) > 0 ? 'text-error' : 'text-primary']">
-                    {{ deviationText(project) }}
+                    {{ deviationText(project) }}h
                   </p>
                 </div>
               </div>
@@ -334,6 +446,10 @@ const deviationText = (project) => Number((project.a_hours - project.p_hours).to
               </div>
             </div>
           </div>
+        </div>
+
+        <div v-else class="rounded-2xl border border-dashed border-outline-variant/20 bg-surface-container-low px-6 py-12 text-center text-sm text-on-surface-variant">
+          当前筛选条件下暂无项目或任务数据
         </div>
       </div>
     </section>
