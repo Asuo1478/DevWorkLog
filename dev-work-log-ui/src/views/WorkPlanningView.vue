@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { VueDatePicker } from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 
@@ -7,8 +7,11 @@ const activeTab = ref('weekly-plan')
 const keyword = ref('')
 const statusFilter = ref('全部状态')
 const dateRange = ref(null)
+
 const goalOverviewLoading = ref(false)
 const goalOverviewList = ref([])
+const projectTagsLoading = ref(false)
+const projectTags = ref([])
 
 const weeklyTasks = ref([
   {
@@ -81,69 +84,6 @@ const weeklyTasks = ref([
   }
 ])
 
-const projectTags = ref([
-  {
-    tag_id: 1001,
-    tag_name: '会展信息化2.0',
-    goal_name: '产品&项目研发',
-    year: 2026,
-    start_date: '2026-03-01',
-    end_date: '2026-04-15',
-    budget_days: 18,
-    budget_hours: 144,
-    status: '进行中',
-    progress_rate: 56,
-    p_hours: 42,
-    a_hours: 37.5,
-    tag_desc: '完成报名、支付、导出和后台管理升级'
-  },
-  {
-    tag_id: 1002,
-    tag_name: '预售营销3.0',
-    goal_name: '产品&项目研发',
-    year: 2026,
-    start_date: '2026-03-05',
-    end_date: '2026-04-28',
-    budget_days: 16,
-    budget_hours: 128,
-    status: '进行中',
-    progress_rate: 41,
-    p_hours: 36,
-    a_hours: 29,
-    tag_desc: '升级预售营销配置台、数据面板和订单策略'
-  },
-  {
-    tag_id: 1003,
-    tag_name: '线上环境巡检优化',
-    goal_name: '常规运维',
-    year: 2026,
-    start_date: '2026-03-01',
-    end_date: '2026-03-31',
-    budget_days: 8,
-    budget_hours: 64,
-    status: '已完成',
-    progress_rate: 72,
-    p_hours: 18,
-    a_hours: 16,
-    tag_desc: '规范巡检清单并沉淀巡检报告模板'
-  },
-  {
-    tag_id: 1004,
-    tag_name: '图表渲染性能预研',
-    goal_name: '技术预研',
-    year: 2026,
-    start_date: '2026-03-10',
-    end_date: '2026-03-31',
-    budget_days: 7,
-    budget_hours: 56,
-    status: '待启动',
-    progress_rate: 38,
-    p_hours: 14,
-    a_hours: 19,
-    tag_desc: '验证按需拆包、图表懒加载与性能优化收益'
-  }
-])
-
 const tabs = [
   { key: 'weekly-plan', label: '周计划' },
   { key: 'project-manage', label: '项目&任务管理' }
@@ -156,9 +96,17 @@ const keywordPlaceholder = computed(() => (
   activeTab.value === 'weekly-plan' ? '请输入计划名称' : '请输入项目或任务名称'
 ))
 
+const goalOverviewCount = computed(() => goalOverviewList.value.length)
+const currentMonth = new Date().getMonth() + 1
+
+const formatDate = (date) => {
+  if (!date) return ''
+  if (typeof date === 'string') return date.slice(0, 10)
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
 const dateRangeDisplay = computed(() => {
   if (!dateRange.value) return ''
-  const formatDate = (date) => date ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}` : ''
   if (Array.isArray(dateRange.value)) {
     const start = formatDate(dateRange.value[0])
     const end = formatDate(dateRange.value[1])
@@ -194,51 +142,12 @@ const filteredWeeklyTasks = computed(() => {
 
     const matchedStatus = statusFilter.value === '全部状态' || task.task_status === statusFilter.value
     const matchedDate = inRange(task.week_start_date, task.week_end_date)
-
-    return matchedKeyword && matchedStatus && matchedDate
-  })
-})
-
-const filteredProjectTags = computed(() => {
-  const kw = keyword.value.trim().toLowerCase()
-  return projectTags.value.filter((project) => {
-    const matchedKeyword = !kw || [
-      project.tag_name,
-      project.tag_desc,
-      project.goal_name
-    ].some((item) => String(item || '').toLowerCase().includes(kw))
-
-    const matchedStatus = statusFilter.value === '全部状态' || project.status === statusFilter.value
-    const matchedDate = inRange(project.start_date, project.end_date)
-
     return matchedKeyword && matchedStatus && matchedDate
   })
 })
 
 const totalPlanHours = computed(() => filteredWeeklyTasks.value.reduce((sum, item) => sum + Number(item.p_hours || 0), 0))
 const completedWeeklyTasks = computed(() => filteredWeeklyTasks.value.filter((item) => item.task_status === '已完成').length)
-const activeProjects = computed(() => filteredProjectTags.value.filter((item) => item.status !== '已完成' && item.status !== '已关闭').length)
-const pendingProjects = computed(() => filteredProjectTags.value.filter((item) => item.status === '待启动').length)
-const totalProjectBudgetHours = computed(() => filteredProjectTags.value.reduce((sum, item) => sum + Number(item.budget_hours || 0), 0))
-const currentMonth = new Date().getMonth() + 1
-
-const fetchGoalOverview = async () => {
-  goalOverviewLoading.value = true
-  try {
-    const res = await fetch(`/api/v1/goal-defines/current-month-overview?month=${currentMonth}`)
-    const json = await res.json()
-    if (json.code === 200) {
-      goalOverviewList.value = json.data?.list || []
-    } else {
-      goalOverviewList.value = []
-    }
-  } catch (error) {
-    console.error('获取当前月目标概览失败', error)
-    goalOverviewList.value = []
-  } finally {
-    goalOverviewLoading.value = false
-  }
-}
 
 const getStatusStyle = (status) => {
   if (status === '待启动') return 'bg-yellow-100 text-yellow-700'
@@ -248,17 +157,86 @@ const getStatusStyle = (status) => {
   return 'bg-surface-container text-on-surface-variant'
 }
 
-const deviationText = (project) => Number((project.a_hours - project.p_hours).toFixed(1))
+const parseProjectTag = (item) => ({
+  tag_id: item.tag_id,
+  tag_name: item.tag_name,
+  tag_desc: item.tag_desc || '',
+  goal_id: item.goal_id,
+  goal_name: item.goal_name || '-',
+  goal_desc: item.goal_desc || '',
+  start_date: formatDate(item.start_date),
+  end_date: formatDate(item.end_date),
+  budget_days: Number(item.budget_days || 0),
+  budget_hours: Number(item.budget_hours || 0),
+  status: item.status || '待启动',
+  progress_rate: Number(item.progress_rate || 0),
+  actual_hours: Number(item.actual_hours || 0),
+  create_time: formatDate(item.create_time)
+})
 
-const resetFilters = () => {
-  keyword.value = ''
+const fetchGoalOverview = async () => {
+  goalOverviewLoading.value = true
+  try {
+    const res = await fetch(`/api/v1/goal-defines/current-month-overview?month=${currentMonth}`)
+    const json = await res.json()
+    goalOverviewList.value = json.code === 200 ? (json.data?.list || []) : []
+  } catch (error) {
+    console.error('获取当前月目标概览失败', error)
+    goalOverviewList.value = []
+  } finally {
+    goalOverviewLoading.value = false
+  }
+}
+
+const fetchProjectTags = async () => {
+  projectTagsLoading.value = true
+  try {
+    const params = new URLSearchParams()
+    if (keyword.value.trim()) params.set('keyword', keyword.value.trim())
+    if (statusFilter.value !== '全部状态') params.set('status', statusFilter.value)
+    if (Array.isArray(dateRange.value) && dateRange.value[0] && dateRange.value[1]) {
+      params.set('start_date', formatDate(dateRange.value[0]))
+      params.set('end_date', formatDate(dateRange.value[1]))
+    }
+
+    const query = params.toString()
+    const res = await fetch(`/api/v1/project-tags/planning${query ? `?${query}` : ''}`)
+    const json = await res.json()
+    projectTags.value = json.code === 200 ? (json.data || []).map(parseProjectTag) : []
+  } catch (error) {
+    console.error('获取项目&任务管理列表失败', error)
+    projectTags.value = []
+  } finally {
+    projectTagsLoading.value = false
+  }
+}
+
+const deviationText = (project) => {
+  if (project.actual_hours === null || Number.isNaN(Number(project.actual_hours))) return null
+  return Number((Number(project.budget_hours || 0) - Number(project.actual_hours || 0)).toFixed(1))
+}
+
+const clearDateRange = () => {
+  dateRange.value = null
+}
+
+const openGoalPlanning = (goal) => {
+  activeTab.value = 'project-manage'
+  keyword.value = goal.goal_name || ''
   statusFilter.value = '全部状态'
   dateRange.value = null
 }
 
 onMounted(() => {
   fetchGoalOverview()
+  fetchProjectTags()
 })
+
+watch([keyword, statusFilter, dateRange], () => {
+  if (activeTab.value === 'project-manage') {
+    fetchProjectTags()
+  }
+}, { deep: true })
 </script>
 
 <template>
@@ -303,7 +281,7 @@ onMounted(() => {
                 >
                   <span class="inline-flex items-center gap-1.5">
                     <span class="material-symbols-outlined text-[16px]">edit_calendar</span>
-                    <span>起止日期</span>
+                    <span>立项时间</span>
                   </span>
                   <span class="ml-auto text-on-surface-variant/80 font-medium truncate max-w-[170px] text-right">
                     {{ dateRangeDisplay || '全部' }}
@@ -311,7 +289,7 @@ onMounted(() => {
                   <button
                     v-if="dateRangeDisplay"
                     type="button"
-                    @click.stop="dateRange = null"
+                    @click.stop="clearDateRange"
                     class="inline-flex h-5 w-5 items-center justify-center rounded-full text-on-surface-variant/70 hover:bg-surface-container hover:text-error transition-colors shrink-0"
                     title="清空日期"
                   >
@@ -401,13 +379,30 @@ onMounted(() => {
               正在加载当前月份团队目标...
             </div>
             <div v-else-if="goalOverviewList.length" class="h-full overflow-x-auto pb-2">
-              <div class="flex gap-4 min-w-max">
+              <div
+                :class="[goalOverviewCount <= 4 ? 'grid w-full' : 'flex gap-4 min-w-max']"
+                :style="goalOverviewCount <= 4 ? `grid-template-columns: repeat(${goalOverviewCount}, minmax(0, 1fr)); gap: 1rem;` : ''"
+              >
                 <div
                   v-for="goal in goalOverviewList"
                   :key="goal.goal_id"
-                  class="w-[280px] h-[118px] shrink-0 rounded-xl bg-surface-container-lowest border border-outline-variant/10 px-5 py-4 flex flex-col justify-between"
+                  :class="[
+                    'h-[118px] rounded-xl bg-surface-container-lowest border border-outline-variant/10 px-5 py-4 flex flex-col justify-between',
+                    goalOverviewCount <= 4 ? 'min-w-0' : 'w-[280px] shrink-0'
+                  ]"
                 >
-                  <p class="text-sm font-bold text-on-surface truncate">{{ goal.goal_name }}</p>
+                  <div class="flex items-start justify-between gap-3">
+                    <p class="text-sm font-bold text-on-surface truncate">{{ goal.goal_name }}</p>
+                    <button
+                      type="button"
+                      @click="openGoalPlanning(goal)"
+                      class="inline-flex items-center gap-1 rounded-full border border-primary/15 bg-primary/10 px-2.5 py-1 text-[11px] font-bold text-primary transition-colors hover:bg-primary/15 shrink-0"
+                      title="根据该团队目标制定项目或任务计划"
+                    >
+                      <span class="material-symbols-outlined text-[14px]">assignment_add</span>
+                      <span>制定计划</span>
+                    </button>
+                  </div>
                   <div class="flex items-center gap-2 whitespace-nowrap overflow-hidden text-sm">
                     <span class="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-1 font-bold text-primary">权重：{{ goal.weight }}</span>
                     <span class="inline-flex items-center rounded-full bg-secondary/10 px-2.5 py-1 font-bold text-secondary">工时预算：{{ goal.budget_days }}人天</span>
@@ -422,53 +417,59 @@ onMounted(() => {
           </div>
         </div>
 
-        <div v-if="filteredProjectTags.length" class="grid grid-cols-1 xl:grid-cols-2 gap-5">
+        <div v-if="projectTagsLoading" class="rounded-2xl border border-dashed border-outline-variant/20 bg-surface-container-low px-6 py-12 text-center text-sm text-on-surface-variant">
+          正在加载项目&任务数据...
+        </div>
+
+        <div v-else-if="projectTags.length" class="grid grid-cols-1 xl:grid-cols-2 gap-5">
           <div
-            v-for="project in filteredProjectTags"
+            v-for="project in projectTags"
             :key="project.tag_id"
             class="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 shadow-sm overflow-hidden"
           >
-            <div class="px-5 py-4 border-b border-outline-variant/10 flex justify-between items-start gap-6">
-              <div class="min-w-0 flex-1">
-                <div class="flex flex-wrap items-center gap-2">
-                  <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-primary/10 text-primary">{{ project.goal_name }}</span>
+            <div class="px-5 py-4 border-b border-outline-variant/10">
+              <div class="flex justify-between items-start gap-6">
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-primary/10 text-primary">{{ project.goal_name }}</span>
+                  </div>
+                  <h5 class="mt-3 text-base font-bold text-on-surface whitespace-nowrap overflow-hidden text-ellipsis">{{ project.tag_name }}</h5>
                 </div>
-                <h5 class="mt-3 text-base font-bold text-on-surface whitespace-nowrap overflow-hidden text-ellipsis">{{ project.tag_name }}</h5>
-                <p class="text-sm text-on-surface-variant mt-1">{{ project.tag_desc }}</p>
+                <div class="flex flex-col items-end gap-2 text-right shrink-0">
+                  <select
+                    v-model="project.status"
+                    :class="[
+                      'px-3 py-1 rounded-full text-[11px] font-bold border outline-none appearance-none cursor-pointer',
+                      project.status === '待启动' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' : '',
+                      project.status === '进行中' ? 'bg-primary/10 text-primary border-primary/20' : '',
+                      project.status === '已完成' ? 'bg-green-100 text-green-700 border-green-200' : '',
+                      project.status === '已关闭' ? 'bg-slate-200 text-slate-600 border-slate-300' : ''
+                    ]"
+                  >
+                    <option v-for="status in projectStatusOptions" :key="status" :value="status">
+                      {{ status }}
+                    </option>
+                  </select>
+                  <p class="text-sm font-medium text-on-surface-variant whitespace-nowrap">起止时间：{{ project.start_date }} 至 {{ project.end_date }}</p>
+                </div>
               </div>
-              <div class="flex flex-col items-end gap-2 text-right shrink-0">
-                <select
-                  v-model="project.status"
-                  :class="[
-                    'px-3 py-1 rounded-full text-[11px] font-bold border outline-none appearance-none cursor-pointer',
-                    project.status === '待启动' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' : '',
-                    project.status === '进行中' ? 'bg-primary/10 text-primary border-primary/20' : '',
-                    project.status === '已完成' ? 'bg-green-100 text-green-700 border-green-200' : '',
-                    project.status === '已关闭' ? 'bg-slate-200 text-slate-600 border-slate-300' : ''
-                  ]"
-                >
-                  <option v-for="status in projectStatusOptions" :key="status" :value="status">
-                    {{ status }}
-                  </option>
-                </select>
-                <p class="text-sm font-medium text-on-surface-variant whitespace-nowrap">起止时间：{{ project.start_date }} 至 {{ project.end_date }}</p>
-              </div>
+              <p class="mt-3 text-sm text-on-surface-variant leading-7 line-clamp-2 w-full">{{ project.tag_desc }}</p>
             </div>
 
             <div class="px-5 py-5">
-              <div class="grid grid-cols-3 gap-3 mb-4">
+              <div class="grid grid-cols-[1.35fr_0.85fr_0.8fr] gap-3 mb-4">
                 <div class="rounded-xl bg-surface-container-low px-4 py-3">
                   <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">计划工时</p>
-                  <p class="font-manrope text-xl font-extrabold text-on-surface">{{ project.budget_days }}人天 / {{ project.budget_hours }}h</p>
+                  <p class="font-manrope text-xl font-extrabold text-on-surface whitespace-nowrap">{{ project.budget_days }}人天 / {{ project.budget_hours }}h</p>
                 </div>
                 <div class="rounded-xl bg-surface-container-low px-4 py-3">
                   <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">实际工时</p>
-                  <p class="font-manrope text-xl font-extrabold text-on-surface">{{ project.a_hours }}h</p>
+                  <p class="font-manrope text-xl font-extrabold text-on-surface whitespace-nowrap">{{ project.actual_hours === null ? '-' : `${project.actual_hours}h` }}</p>
                 </div>
                 <div class="rounded-xl bg-surface-container-low px-4 py-3">
                   <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">偏差</p>
-                  <p :class="['font-manrope text-xl font-extrabold', deviationText(project) > 0 ? 'text-error' : 'text-primary']">
-                    {{ deviationText(project) }}h
+                  <p :class="['font-manrope text-xl font-extrabold whitespace-nowrap', deviationText(project) !== null && deviationText(project) < 0 ? 'text-error' : 'text-primary']">
+                    {{ deviationText(project) === null ? '-' : `${deviationText(project)}h` }}
                   </p>
                 </div>
               </div>
