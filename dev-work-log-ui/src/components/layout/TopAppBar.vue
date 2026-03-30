@@ -14,13 +14,13 @@ const isWorkSummaryPage = computed(() => (
 const workSummaryTabs = [
   {
     key: 'dashboard',
-    label: '汇总看板',
+    label: '工作看板',
     description: '实时掌握研发工时投入、产品工时分布、周工作时长...'
   },
   {
     key: 'log-summary',
-    label: '日志汇总',
-    description: '工作日志汇总综合查询与导出。'
+    label: '汇总导出',
+    description: '工作日志汇总导出综合查询。'
   }
 ]
 
@@ -70,7 +70,7 @@ const pageSubtitle = computed(() => {
     <div class="flex items-center gap-8 min-w-0">
       <template v-if="isWorkSummaryPage">
         <div class="flex items-center min-w-0">
-          <div class="inline-flex items-stretch rounded-[22px] bg-surface-container-low border border-outline-variant/10 shadow-sm overflow-hidden">
+          <div class="inline-flex items-stretch rounded-md bg-surface-container-low border border-outline-variant/10 shadow-sm overflow-hidden">
             <button
               v-for="tab in workSummaryTabs"
               :key="tab.key"

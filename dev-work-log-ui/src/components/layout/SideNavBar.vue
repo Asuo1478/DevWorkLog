@@ -73,6 +73,7 @@ const handleLogout = () => {
       </router-link>
 
       <router-link
+        v-if="authStore.isAdmin"
         to="/team-goals"
         :class="[
           'flex items-center space-x-3 px-4 py-3 rounded-lg transition-transform duration-200',
@@ -86,6 +87,7 @@ const handleLogout = () => {
       </router-link>
 
       <router-link
+        v-if="authStore.isAdmin"
         to="/project-resource-board"
         :class="[
           'flex items-center space-x-3 px-4 py-3 rounded-lg transition-transform duration-200',
@@ -99,6 +101,7 @@ const handleLogout = () => {
       </router-link>
 
       <router-link
+        v-if="authStore.isAdmin"
         to="/risk-warning-center"
         :class="[
           'flex items-center space-x-3 px-4 py-3 rounded-lg transition-transform duration-200',

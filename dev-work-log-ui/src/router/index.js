@@ -54,7 +54,7 @@ const router = createRouter({
           path: 'team-goals',
           name: 'team-goals',
           component: TeamGoalsView,
-          meta: { requiresAuth: true }
+          meta: { requiresAuth: true, requiresAdmin: true }
         },
         {
           path: 'work-planning',
@@ -66,13 +66,13 @@ const router = createRouter({
           path: 'project-resource-board',
           name: 'project-resource-board',
           component: ProjectResourceBoardView,
-          meta: { requiresAuth: true }
+          meta: { requiresAuth: true, requiresAdmin: true }
         },
         {
           path: 'risk-warning-center',
           name: 'risk-warning-center',
           component: RiskWarningCenterView,
-          meta: { requiresAuth: true }
+          meta: { requiresAuth: true, requiresAdmin: true }
         },
         {
           path: 'employees',
