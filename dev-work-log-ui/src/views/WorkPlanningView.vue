@@ -63,6 +63,7 @@ const keywordPlaceholder = computed(() => (activeTab.value === 'weekly-plan' ? '
 const goalOverviewCount = computed(() => goalOverviewList.value.length)
 const projectDialogTitle = computed(() => (projectDialogMode.value === 'create' ? '制定计划' : '编辑项目&任务'))
 const projectDialogSubmitText = computed(() => (projectDialogMode.value === 'create' ? '确认保存' : '保存修改'))
+const dateRangeTitle = computed(() => (activeTab.value === 'weekly-plan' ? '计划时间' : '立项时间'))
 
 const dateRangeDisplay = computed(() => {
   if (!dateRange.value) return ''
@@ -481,7 +482,7 @@ onMounted(() => {
                 <div class="w-full xl:min-w-[320px] px-4 py-2.5 text-[13px] font-bold rounded-lg bg-surface-container-low text-on-surface border border-outline-variant/10 transition-all flex items-center gap-3 whitespace-nowrap cursor-pointer">
                   <span class="inline-flex items-center gap-1.5 shrink-0">
                     <span class="material-symbols-outlined text-[16px]">edit_calendar</span>
-                    <span>立项时间</span>
+                    <span>{{ dateRangeTitle }}</span>
                   </span>
                   <span class="ml-auto text-on-surface-variant/80 font-medium truncate text-right">{{ dateRangeDisplay || '全部' }}</span>
                   <span v-if="dateRangeDisplay" @click.stop="clearDateRange" class="inline-flex h-5 w-5 items-center justify-center rounded-full text-on-surface-variant/70 hover:bg-surface-container hover:text-error transition-colors shrink-0" title="清空日期">
@@ -599,7 +600,6 @@ onMounted(() => {
                     <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-primary/10 text-primary">{{ project.goal_name }}</span>
                   </div>
                   <h5 class="mt-3 text-[18px] font-bold text-on-surface whitespace-nowrap overflow-hidden text-ellipsis">{{ project.tag_name }}</h5>
-                  <p class="mt-3 text-sm text-on-surface-variant leading-7 line-clamp-2 w-full max-w-[calc(100%-8px)]">{{ project.tag_desc || '-' }}</p>
                 </div>
 
                 <div class="flex flex-col items-end gap-2 text-right shrink-0">
@@ -616,6 +616,12 @@ onMounted(() => {
                   </div>
                   <p class="text-sm font-medium text-on-surface-variant whitespace-nowrap">起止时间：{{ project.start_date }} 至 {{ project.end_date }}</p>
                 </div>
+              </div>
+
+              <div class="mt-3 w-full">
+                <p class="max-w-full overflow-hidden text-ellipsis text-sm leading-7 text-on-surface-variant line-clamp-2 break-all min-h-[56px]">
+                  {{ project.tag_desc || '-' }}
+                </p>
               </div>
             </div>
 
