@@ -120,6 +120,7 @@ CREATE TABLE `user_task` (
   `week_start_date` date DEFAULT NULL COMMENT '周开始日期',
   `week_end_date` date DEFAULT NULL COMMENT '周结束日期',
   `p_hours` decimal(8,2) DEFAULT '0.00' COMMENT '计划工时',
+  `tag_name` varchar(100) NOT NULL COMMENT '规划名称',
   `task_content` varchar(500) DEFAULT NULL COMMENT '本周规划内容',
   `task_status` varchar(20) DEFAULT '待启动' COMMENT '待启动/进行中/已完成/已关闭',
   `completion_rate` decimal(5,2) DEFAULT '0.00' COMMENT '完成度',
