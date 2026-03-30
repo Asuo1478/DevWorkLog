@@ -4,11 +4,20 @@ import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
 
+const now = new Date()
+const currentMonthValue = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+
 const activeTab = ref('resource-plan')
-const selectedMonth = ref('2026-03')
+const selectedMonth = ref(currentMonthValue)
 
 const goalDefines = ref([])
 const resourcePlanList = ref([])
+const resourcePlanStatus = reactive({
+  year: now.getFullYear(),
+  month: now.getMonth() + 1,
+  has_config: true,
+  count: 0
+})
 const resourcePlanSummary = reactive({
   total_weight: 0,
   total_budget_days: 0,
@@ -18,12 +27,21 @@ const resourcePlanSummary = reactive({
 const listLoading = ref(false)
 const resourceLoading = ref(false)
 const submitting = ref(false)
+const initLoading = ref(false)
+const resourceSubmitting = ref(false)
 
 const dialogMode = ref('create')
 const detailVisible = ref(false)
 const formVisible = ref(false)
 const deleteVisible = ref(false)
 const currentGoal = ref(null)
+
+const resourceEditVisible = ref(false)
+const currentResourcePlan = ref(null)
+const resourcePlanForm = reactive({
+  weight: '',
+  budget_days: ''
+})
 
 const goalForm = reactive({
   goal_name: '',
@@ -36,6 +54,9 @@ const monthLabel = computed(() => {
   const [year, month] = selectedMonth.value.split('-')
   return `${year}年${Number(month)}月`
 })
+
+const currentPlanMonthLabel = computed(() => `${resourcePlanStatus.year}年${resourcePlanStatus.month}月`)
+const canShowInitButton = computed(() => !resourcePlanStatus.has_config)
 
 const sortedGoalDefines = computed(() => {
   return [...goalDefines.value].sort((a, b) => {
@@ -74,6 +95,18 @@ const loadGoalDefines = async () => {
   }
 }
 
+const loadResourcePlanStatus = async () => {
+  try {
+    const data = await requestJson('/api/v1/goal-defines/resource-plan/current-month-status')
+    resourcePlanStatus.year = Number(data.year || resourcePlanStatus.year)
+    resourcePlanStatus.month = Number(data.month || resourcePlanStatus.month)
+    resourcePlanStatus.has_config = Boolean(data.has_config)
+    resourcePlanStatus.count = Number(data.count || 0)
+  } catch (error) {
+    alert(error.message || '本月资源规划状态加载失败')
+  }
+}
+
 const loadResourcePlan = async () => {
   resourceLoading.value = true
   try {
@@ -108,6 +141,11 @@ const fillForm = (goal) => {
   goalForm.status = Number(goal.status ?? 1)
 }
 
+const fillResourcePlanForm = (config) => {
+  resourcePlanForm.weight = Number(config.weight || 0)
+  resourcePlanForm.budget_days = Number(config.budget_days || 0)
+}
+
 const openCreateDialog = () => {
   dialogMode.value = 'create'
   currentGoal.value = null
@@ -136,9 +174,20 @@ const openDeleteDialog = (goal) => {
   deleteVisible.value = true
 }
 
+const openResourceEditDialog = (config) => {
+  currentResourcePlan.value = config
+  fillResourcePlanForm(config)
+  resourceEditVisible.value = true
+}
+
 const closeFormDialog = () => {
   if (submitting.value) return
   formVisible.value = false
+}
+
+const closeResourceEditDialog = () => {
+  if (resourceSubmitting.value) return
+  resourceEditVisible.value = false
 }
 
 const submitGoalForm = async () => {
@@ -176,6 +225,54 @@ const submitGoalForm = async () => {
   }
 }
 
+const submitResourcePlanForm = async () => {
+  if (!currentResourcePlan.value || resourceSubmitting.value) return
+
+  resourceSubmitting.value = true
+
+  try {
+    await requestJson(`/api/v1/goal-defines/resource-plan/${currentResourcePlan.value.config_id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        weight: Number(resourcePlanForm.weight || 0),
+        budget_days: Number(resourcePlanForm.budget_days || 0),
+        user_id: authStore.user.id || null
+      })
+    })
+
+    resourceEditVisible.value = false
+    await loadResourcePlan()
+  } catch (error) {
+    alert(error.message || '月度资源规划保存失败')
+  } finally {
+    resourceSubmitting.value = false
+  }
+}
+
+const initCurrentMonthResourcePlan = async () => {
+  if (initLoading.value) return
+
+  initLoading.value = true
+
+  try {
+    await requestJson('/api/v1/goal-defines/resource-plan/init-current', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: authStore.user.id || null
+      })
+    })
+
+    selectedMonth.value = currentMonthValue
+    await Promise.all([loadResourcePlanStatus(), loadResourcePlan()])
+  } catch (error) {
+    alert(error.message || '本月资源规划初始化失败')
+  } finally {
+    initLoading.value = false
+  }
+}
+
 const toggleStatus = async (goal) => {
   const nextStatus = Number(goal.status) === 1 ? 0 : 1
 
@@ -208,7 +305,7 @@ const confirmDelete = async () => {
 
     deleteVisible.value = false
     currentGoal.value = null
-    await Promise.all([loadGoalDefines(), loadResourcePlan()])
+    await Promise.all([loadGoalDefines(), loadResourcePlan(), loadResourcePlanStatus()])
   } catch (error) {
     alert(error.message || '删除失败')
   } finally {
@@ -221,7 +318,7 @@ watch(selectedMonth, () => {
 })
 
 onMounted(async () => {
-  await Promise.all([loadGoalDefines(), loadResourcePlan()])
+  await Promise.all([loadGoalDefines(), loadResourcePlanStatus(), loadResourcePlan()])
 })
 </script>
 
@@ -247,36 +344,40 @@ onMounted(async () => {
             {{ tab.label }}
           </button>
         </div>
+
+        <button
+          v-if="canShowInitButton"
+          type="button"
+          @click="initCurrentMonthResourcePlan"
+          class="inline-flex items-center gap-2 rounded-lg bg-primary text-white px-4 py-2.5 text-sm font-bold shadow-sm hover:opacity-95 active:scale-[0.99] disabled:opacity-50 self-start lg:self-center"
+          :disabled="initLoading"
+        >
+          <span class="material-symbols-outlined text-base">calendar_month</span>
+          月度资源规划
+        </button>
       </div>
 
       <div v-if="activeTab === 'resource-plan'" class="p-6 space-y-6">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
-          <div class="bg-surface-container-low rounded-xl p-5 border border-outline-variant/10">
-            <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">规划月份</p>
-            <h4 class="text-2xl font-manrope font-extrabold text-primary">{{ monthLabel }}</h4>
-            <p class="text-xs text-on-surface-variant mt-2">当前查看 `goal_config.year + month` 维度配置</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="bg-surface-container-low rounded-xl px-5 py-4 border border-outline-variant/10">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">规划月份</p>
+            <h4 class="text-xl font-manrope font-extrabold text-primary">{{ monthLabel }}</h4>
           </div>
-          <div class="bg-surface-container-low rounded-xl p-5 border border-outline-variant/10">
-            <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">总权重</p>
-            <h4 class="text-2xl font-manrope font-extrabold text-on-surface">{{ resourcePlanSummary.total_weight }}%</h4>
-            <p class="text-xs text-on-surface-variant mt-2">建议保持月度权重汇总为 100%</p>
+          <div class="bg-surface-container-low rounded-xl px-5 py-4 border border-outline-variant/10">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">总权重 / 总预算人天</p>
+            <h4 class="text-xl font-manrope font-extrabold text-on-surface">
+              {{ resourcePlanSummary.total_weight }}% / {{ resourcePlanSummary.total_budget_days }}
+            </h4>
           </div>
-          <div class="bg-surface-container-low rounded-xl p-5 border border-outline-variant/10">
-            <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">预算人天</p>
-            <h4 class="text-2xl font-manrope font-extrabold text-on-surface">{{ resourcePlanSummary.total_budget_days }}</h4>
-            <p class="text-xs text-on-surface-variant mt-2">来源字段：`goal_config.budget_days`</p>
-          </div>
-          <div class="bg-surface-container-low rounded-xl p-5 border border-outline-variant/10">
-            <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">Tag占用预算</p>
-            <h4 class="text-2xl font-manrope font-extrabold text-on-surface">{{ resourcePlanSummary.total_occupied_days }}</h4>
-            <p class="text-xs text-on-surface-variant mt-2">基于关联 `project_tag.budget_days` 汇总</p>
+          <div class="bg-surface-container-low rounded-xl px-5 py-4 border border-outline-variant/10">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">项目&任务预算占用</p>
+            <h4 class="text-xl font-manrope font-extrabold text-on-surface">{{ resourcePlanSummary.total_occupied_days }}</h4>
           </div>
         </div>
 
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h4 class="font-manrope text-lg font-bold text-on-surface">月度资源规划表</h4>
-            <p class="text-sm text-on-surface-variant mt-1">按月查看各目标分类的权重、预算、关联 Tag 占用与剩余空间。</p>
           </div>
           <div class="flex items-center gap-3">
             <label class="text-xs font-bold text-on-surface-variant uppercase tracking-widest">月份</label>
@@ -296,59 +397,58 @@ onMounted(async () => {
           当前月份暂无月度资源规划数据
         </div>
 
-        <div v-else class="grid grid-cols-1 xl:grid-cols-2 gap-5">
+        <div v-else class="grid grid-cols-1 xl:grid-cols-2 gap-4">
           <div
             v-for="config in resourcePlanList"
             :key="config.config_id"
             class="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 shadow-sm overflow-hidden"
           >
-            <div class="px-5 py-4 border-b border-outline-variant/10 flex justify-between items-start gap-4">
+            <div class="px-5 py-4 flex justify-between items-start gap-4 border-b border-outline-variant/10">
+              <div class="min-w-0">
+                <h5 class="text-base font-bold text-primary truncate">{{ config.goal_name }}</h5>
+                <p class="text-sm text-on-surface-variant mt-1 line-clamp-2">{{ config.goal_desc || '-' }}</p>
+              </div>
+              <button
+                type="button"
+                @click="openResourceEditDialog(config)"
+                class="h-10 w-10 shrink-0 rounded-full bg-primary/8 text-primary inline-flex items-center justify-center hover:bg-primary/12"
+                aria-label="编辑月度资源规划"
+              >
+                <span class="material-symbols-outlined text-[20px]">edit</span>
+              </button>
+            </div>
+
+            <div class="px-5 py-4 space-y-4">
+              <div class="space-y-2 text-sm text-on-surface">
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <span class="font-semibold">月度权重{{ config.weight }}%</span>
+                  <span class="text-on-surface-variant">|</span>
+                  <span class="font-semibold">预算人天{{ config.budget_days }}</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <span class="font-semibold">关联Tag数{{ config.tag_count }}</span>
+                  <span class="text-on-surface-variant">|</span>
+                  <span :class="['font-semibold', config.remaining_days < 0 ? 'text-error' : 'text-on-surface']">
+                    剩余预算人天{{ config.remaining_days }}
+                  </span>
+                </div>
+              </div>
+
               <div>
-                <h5 class="text-base font-bold text-primary">{{ config.goal_name }}</h5>
-                <p class="text-sm text-on-surface-variant mt-1">{{ config.goal_desc }}</p>
-              </div>
-              <span class="px-3 py-1 rounded-full text-[10px] font-bold bg-primary/10 text-primary">
-                config_id: {{ config.config_id }}
-              </span>
-            </div>
-
-            <div class="p-5 grid grid-cols-2 gap-4 text-sm">
-              <div class="rounded-xl bg-surface-container-low px-4 py-3">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">月度权重</p>
-                <p class="font-manrope text-2xl font-extrabold text-on-surface">{{ config.weight }}%</p>
-              </div>
-              <div class="rounded-xl bg-surface-container-low px-4 py-3">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">预算人天</p>
-                <p class="font-manrope text-2xl font-extrabold text-on-surface">{{ config.budget_days }}</p>
-              </div>
-              <div class="rounded-xl bg-surface-container-low px-4 py-3">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">关联Tag数</p>
-                <p class="font-manrope text-2xl font-extrabold text-on-surface">{{ config.tag_count }}</p>
-              </div>
-              <div class="rounded-xl bg-surface-container-low px-4 py-3">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">剩余预算</p>
-                <p :class="['font-manrope text-2xl font-extrabold', config.remaining_days < 0 ? 'text-error' : 'text-on-surface']">
-                  {{ config.remaining_days }}
-                </p>
-              </div>
-            </div>
-
-            <div class="px-5 pb-5">
-              <div class="mb-3">
-                <div class="flex justify-between items-center text-xs text-on-surface-variant mb-1">
-                  <span>Tag 预算占用</span>
+                <div class="flex justify-between items-center text-xs text-on-surface-variant mb-1.5">
+                  <span>项目&任务预算占用</span>
                   <span>{{ config.occupied_days }} / {{ config.budget_days }} 人天</span>
                 </div>
                 <div class="h-2 rounded-full bg-surface-container overflow-hidden">
                   <div
                     class="h-full rounded-full bg-primary transition-all"
-                    :style="`width: ${Math.min((config.occupied_days / config.budget_days) * 100, 100)}%`"
+                    :style="`width: ${config.budget_days > 0 ? Math.min((config.occupied_days / config.budget_days) * 100, 100) : 0}%`"
                   ></div>
                 </div>
               </div>
 
               <div class="rounded-xl bg-surface-container-low px-4 py-3">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">关联项目Tag</p>
+                <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">关联项目&任务</p>
                 <div class="flex flex-wrap gap-2">
                   <span
                     v-for="tagName in config.related_tag_names"
@@ -357,8 +457,10 @@ onMounted(async () => {
                   >
                     {{ tagName }}
                   </span>
+                  <span v-if="!config.related_tag_names.length" class="text-xs text-on-surface-variant">
+                    暂无关联项目&任务
+                  </span>
                 </div>
-                <p class="text-xs text-on-surface-variant mt-3">{{ config.remark }}</p>
               </div>
             </div>
           </div>
@@ -398,9 +500,7 @@ onMounted(async () => {
               </thead>
               <tbody v-if="sortedGoalDefines.length" class="divide-y divide-outline-variant/10">
                 <tr v-for="goal in sortedGoalDefines" :key="goal.goal_id" class="hover:bg-surface-container-low/40 transition-colors">
-                  <td class="px-6 py-4">
-                    <p class="font-bold text-on-surface">{{ goal.goal_name }}</p>
-                  </td>
+                  <td class="px-6 py-4"><p class="font-bold text-on-surface">{{ goal.goal_name }}</p></td>
                   <td class="px-6 py-4 text-sm text-on-surface-variant">{{ goal.goal_desc || '-' }}</td>
                   <td class="px-6 py-4 text-sm font-manrope font-bold text-on-surface">{{ goal.sort_no }}</td>
                   <td class="px-6 py-4">
@@ -423,27 +523,9 @@ onMounted(async () => {
                   </td>
                   <td class="px-6 py-4">
                     <div class="flex items-center gap-2">
-                      <button
-                        type="button"
-                        @click="openDetailDialog(goal)"
-                        class="px-3 py-1.5 rounded-lg text-xs font-bold bg-surface-container-low text-on-surface-variant hover:text-primary"
-                      >
-                        详情
-                      </button>
-                      <button
-                        type="button"
-                        @click="openEditDialog(goal)"
-                        class="px-3 py-1.5 rounded-lg text-xs font-bold bg-primary/10 text-primary hover:bg-primary/15"
-                      >
-                        编辑
-                      </button>
-                      <button
-                        type="button"
-                        @click="openDeleteDialog(goal)"
-                        class="px-3 py-1.5 rounded-lg text-xs font-bold bg-error/10 text-error hover:bg-error/15"
-                      >
-                        删除
-                      </button>
+                      <button type="button" @click="openDetailDialog(goal)" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-surface-container-low text-on-surface-variant hover:text-primary">详情</button>
+                      <button type="button" @click="openEditDialog(goal)" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-primary/10 text-primary hover:bg-primary/15">编辑</button>
+                      <button type="button" @click="openDeleteDialog(goal)" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-error/10 text-error hover:bg-error/15">删除</button>
                     </div>
                   </td>
                 </tr>
@@ -473,30 +555,17 @@ onMounted(async () => {
         <div class="px-6 py-5 grid grid-cols-1 md:grid-cols-2 gap-5">
           <label class="block md:col-span-2">
             <span class="text-sm font-bold text-on-surface">目标名称</span>
-            <input
-              v-model="goalForm.goal_name"
-              type="text"
-              class="mt-2 w-full rounded-xl border border-outline-variant/20 bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none focus:border-primary/30"
-              placeholder="请输入目标名称"
-            />
+            <input v-model="goalForm.goal_name" type="text" class="mt-2 w-full rounded-xl border border-outline-variant/20 bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none focus:border-primary/30" placeholder="请输入目标名称" />
           </label>
 
           <label class="block">
             <span class="text-sm font-bold text-on-surface">排序</span>
-            <input
-              v-model="goalForm.sort_no"
-              type="number"
-              class="mt-2 w-full rounded-xl border border-outline-variant/20 bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none focus:border-primary/30"
-              placeholder="请输入排序号"
-            />
+            <input v-model="goalForm.sort_no" type="number" class="mt-2 w-full rounded-xl border border-outline-variant/20 bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none focus:border-primary/30" placeholder="请输入排序号" />
           </label>
 
           <label class="block">
             <span class="text-sm font-bold text-on-surface">状态</span>
-            <select
-              v-model="goalForm.status"
-              class="mt-2 w-full rounded-xl border border-outline-variant/20 bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none focus:border-primary/30"
-            >
+            <select v-model="goalForm.status" class="mt-2 w-full rounded-xl border border-outline-variant/20 bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none focus:border-primary/30">
               <option :value="1">启用</option>
               <option :value="0">停用</option>
             </select>
@@ -504,27 +573,65 @@ onMounted(async () => {
 
           <label class="block md:col-span-2">
             <span class="text-sm font-bold text-on-surface">目标说明</span>
-            <textarea
-              v-model="goalForm.goal_desc"
-              rows="4"
-              class="mt-2 w-full rounded-xl border border-outline-variant/20 bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none resize-none focus:border-primary/30"
-              placeholder="请输入目标说明"
-            ></textarea>
+            <textarea v-model="goalForm.goal_desc" rows="4" class="mt-2 w-full rounded-xl border border-outline-variant/20 bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none resize-none focus:border-primary/30" placeholder="请输入目标说明"></textarea>
           </label>
         </div>
 
         <div class="px-6 py-4 border-t border-outline-variant/10 flex items-center justify-end gap-3 bg-surface-container-lowest">
-          <button type="button" @click="closeFormDialog" class="px-4 py-2.5 rounded-lg text-sm font-bold bg-surface-container-low text-on-surface-variant">
-            取消
+          <button type="button" @click="closeFormDialog" class="px-4 py-2.5 rounded-lg text-sm font-bold bg-surface-container-low text-on-surface-variant">取消</button>
+          <button type="button" @click="submitGoalForm" class="px-4 py-2.5 rounded-lg text-sm font-bold bg-primary text-white disabled:opacity-50" :disabled="!goalForm.goal_name.trim() || submitting">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="resourceEditVisible && currentResourcePlan" class="fixed inset-0 z-[70] bg-slate-950/35 backdrop-blur-[1px] flex items-center justify-center px-4">
+      <div class="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-outline-variant/10 overflow-hidden">
+        <div class="px-6 py-5 border-b border-outline-variant/10 flex items-center justify-between gap-4">
+          <div>
+            <h4 class="font-manrope text-lg font-bold text-primary">编辑月度资源规划</h4>
+          </div>
+          <button type="button" @click="closeResourceEditDialog" class="text-on-surface-variant hover:text-on-surface">
+            <span class="material-symbols-outlined">close</span>
           </button>
-          <button
-            type="button"
-            @click="submitGoalForm"
-            class="px-4 py-2.5 rounded-lg text-sm font-bold bg-primary text-white disabled:opacity-50"
-            :disabled="!goalForm.goal_name.trim() || submitting"
-          >
-            保存
-          </button>
+        </div>
+
+        <div class="px-6 py-5 space-y-5">
+          <div class="rounded-2xl bg-surface-container-low px-5 py-4">
+            <div class="flex items-start justify-between gap-4">
+              <div class="min-w-0">
+                <h5 class="text-base font-bold text-primary truncate">{{ currentResourcePlan.goal_name }}</h5>
+                <p class="text-sm text-on-surface-variant mt-1 line-clamp-2">{{ currentResourcePlan.goal_desc || '-' }}</p>
+              </div>
+              <span class="px-3 py-1 rounded-full text-xs font-bold bg-primary/10 text-primary shrink-0">{{ currentPlanMonthLabel }}</span>
+            </div>
+            <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+              <div class="rounded-xl bg-white px-4 py-3 border border-outline-variant/10">
+                <p class="text-on-surface-variant">关联项目&任务数</p>
+                <p class="mt-1 font-bold text-on-surface">{{ currentResourcePlan.tag_count }}</p>
+              </div>
+              <div class="rounded-xl bg-white px-4 py-3 border border-outline-variant/10">
+                <p class="text-on-surface-variant">项目&任务预算占用</p>
+                <p class="mt-1 font-bold text-on-surface">{{ currentResourcePlan.occupied_days }} 人天</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <label class="block">
+              <span class="text-sm font-bold text-on-surface">权重</span>
+              <input v-model="resourcePlanForm.weight" type="number" step="0.01" min="0" class="mt-2 w-full rounded-xl border border-outline-variant/20 bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none focus:border-primary/30" placeholder="请输入权重" />
+            </label>
+
+            <label class="block">
+              <span class="text-sm font-bold text-on-surface">预算人天</span>
+              <input v-model="resourcePlanForm.budget_days" type="number" step="0.01" min="0" class="mt-2 w-full rounded-xl border border-outline-variant/20 bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none focus:border-primary/30" placeholder="请输入预算人天" />
+            </label>
+          </div>
+        </div>
+
+        <div class="px-6 py-4 border-t border-outline-variant/10 flex items-center justify-end gap-3 bg-surface-container-lowest">
+          <button type="button" @click="closeResourceEditDialog" class="px-4 py-2.5 rounded-lg text-sm font-bold bg-surface-container-low text-on-surface-variant">取消</button>
+          <button type="button" @click="submitResourcePlanForm" class="px-4 py-2.5 rounded-lg text-sm font-bold bg-primary text-white disabled:opacity-50" :disabled="resourceSubmitting">保存</button>
         </div>
       </div>
     </div>
@@ -543,30 +650,19 @@ onMounted(async () => {
         <div class="px-6 py-5 grid grid-cols-1 md:grid-cols-2 gap-5">
           <div class="md:col-span-2">
             <span class="text-sm font-bold text-on-surface">目标名称</span>
-            <div class="mt-2 w-full rounded-xl border border-outline-variant/20 bg-surface-container-low px-4 py-3 text-sm font-bold text-on-surface">
-              {{ currentGoal.goal_name }}
-            </div>
+            <div class="mt-2 w-full rounded-xl border border-outline-variant/20 bg-surface-container-low px-4 py-3 text-sm font-bold text-on-surface">{{ currentGoal.goal_name }}</div>
           </div>
-
           <div>
             <span class="text-sm font-bold text-on-surface">排序</span>
-            <div class="mt-2 w-full rounded-xl border border-outline-variant/20 bg-surface-container-low px-4 py-3 text-sm font-bold text-on-surface">
-              {{ currentGoal.sort_no }}
-            </div>
+            <div class="mt-2 w-full rounded-xl border border-outline-variant/20 bg-surface-container-low px-4 py-3 text-sm font-bold text-on-surface">{{ currentGoal.sort_no }}</div>
           </div>
-
           <div>
             <span class="text-sm font-bold text-on-surface">状态</span>
-            <div class="mt-2 w-full rounded-xl border border-outline-variant/20 bg-surface-container-low px-4 py-3 text-sm font-bold text-on-surface">
-              {{ statusText(currentGoal.status) }}
-            </div>
+            <div class="mt-2 w-full rounded-xl border border-outline-variant/20 bg-surface-container-low px-4 py-3 text-sm font-bold text-on-surface">{{ statusText(currentGoal.status) }}</div>
           </div>
-
           <div class="md:col-span-2">
             <span class="text-sm font-bold text-on-surface">目标说明</span>
-            <div class="mt-2 w-full rounded-xl border border-outline-variant/20 bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant leading-relaxed min-h-[112px]">
-              {{ currentGoal.goal_desc || '-' }}
-            </div>
+            <div class="mt-2 w-full rounded-xl border border-outline-variant/20 bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant leading-relaxed min-h-[112px]">{{ currentGoal.goal_desc || '-' }}</div>
           </div>
         </div>
       </div>
@@ -576,17 +672,11 @@ onMounted(async () => {
       <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-outline-variant/10 overflow-hidden">
         <div class="px-6 py-5">
           <h4 class="font-manrope text-lg font-bold text-error">删除目标分类</h4>
-          <p class="text-sm text-on-surface-variant mt-2 leading-relaxed">
-            确认删除目标分类“{{ currentGoal.goal_name }}”吗？
-          </p>
+          <p class="text-sm text-on-surface-variant mt-2 leading-relaxed">确认删除目标分类“{{ currentGoal.goal_name }}”吗？</p>
         </div>
         <div class="px-6 py-4 border-t border-outline-variant/10 flex items-center justify-end gap-3 bg-surface-container-lowest">
-          <button type="button" @click="deleteVisible = false" class="px-4 py-2.5 rounded-lg text-sm font-bold bg-surface-container-low text-on-surface-variant">
-            取消
-          </button>
-          <button type="button" @click="confirmDelete" class="px-4 py-2.5 rounded-lg text-sm font-bold bg-error text-white" :disabled="submitting">
-            删除
-          </button>
+          <button type="button" @click="deleteVisible = false" class="px-4 py-2.5 rounded-lg text-sm font-bold bg-surface-container-low text-on-surface-variant">取消</button>
+          <button type="button" @click="confirmDelete" class="px-4 py-2.5 rounded-lg text-sm font-bold bg-error text-white" :disabled="submitting">删除</button>
         </div>
       </div>
     </div>
