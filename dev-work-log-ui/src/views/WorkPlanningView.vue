@@ -216,6 +216,14 @@ const deviationText = (project) => {
   return Number((Number(project.budget_hours || 0) - Number(project.actual_hours || 0)).toFixed(1))
 }
 
+const projectProgress = (project) => {
+  const budgetHours = Number(project.budget_hours || 0)
+  const actualHours = Number(project.actual_hours || 0)
+
+  if (!budgetHours || Number.isNaN(budgetHours)) return 0
+  return Number(Math.min((actualHours / budgetHours) * 100, 100).toFixed(1))
+}
+
 const clearDateRange = () => {
   dateRange.value = null
 }
@@ -477,10 +485,10 @@ watch([keyword, statusFilter, dateRange], () => {
               <div>
                 <div class="flex justify-between items-center text-xs text-on-surface-variant mb-1">
                   <span>项目进度</span>
-                  <span>{{ project.progress_rate }}%</span>
+                  <span>{{ projectProgress(project) }}%</span>
                 </div>
                 <div class="h-2 rounded-full bg-surface-container overflow-hidden">
-                  <div class="h-full rounded-full bg-primary transition-all" :style="`width: ${project.progress_rate}%`"></div>
+                  <div class="h-full rounded-full bg-primary transition-all" :style="`width: ${projectProgress(project)}%`"></div>
                 </div>
               </div>
             </div>
