@@ -293,8 +293,8 @@ const GoalDefineController = {
         year,
         month,
         weight: item.weight,
-        budget_days: item.budget_days,
-        remark: item.remark,
+        budget_days: null,
+        remark: null,
         create_by: req.body.user_id || null,
         update_by: req.body.user_id || null
       }));
