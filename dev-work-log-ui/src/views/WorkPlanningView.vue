@@ -761,7 +761,7 @@ onMounted(() => {
               <div
                 v-for="tag in activeTagCards"
                 :key="tag.tag_id"
-                :class="['rounded-2xl bg-surface-container-lowest border border-outline-variant/10 shadow-sm overflow-hidden', activeTagCardCount <= 4 ? 'min-w-0' : 'w-[540px] shrink-0']"
+                :class="['rounded-2xl bg-surface-container-lowest border border-outline-variant/10 shadow-sm overflow-hidden', activeTagCardCount <= 4 ? 'min-w-0' : 'w-[320px] shrink-0']"
               >
                 <div class="px-5 py-4 border-b border-outline-variant/10">
                   <div class="flex justify-between items-start gap-6">
@@ -776,26 +776,21 @@ onMounted(() => {
                         <span class="material-symbols-outlined text-[14px]">assignment_add</span>
                         <span>制定计划</span>
                       </button>
-                      <p class="text-sm font-medium text-on-surface-variant whitespace-nowrap">起止时间：{{ tag.start_date }} 至 {{ tag.end_date }}</p>
                     </div>
                   </div>
-                  <div class="mt-3 w-full">
-                    <p class="max-w-full overflow-hidden text-ellipsis text-sm leading-7 text-on-surface-variant line-clamp-2 break-all min-h-[56px]">{{ tag.tag_desc || '-' }}</p>
+                  <div class="mt-3">
+                    <p class="text-sm font-medium text-on-surface-variant whitespace-nowrap overflow-hidden text-ellipsis">起止时间：{{ tag.start_date }} 至 {{ tag.end_date }}</p>
                   </div>
                 </div>
                 <div class="px-5 py-5">
-                  <div class="grid grid-cols-[1.35fr_0.85fr_0.8fr] gap-3 mb-4">
-                    <div class="rounded-xl bg-surface-container-low px-4 py-3">
-                      <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">预计工时</p>
-                      <p class="font-manrope text-xl font-extrabold text-on-surface whitespace-nowrap">{{ plannedHoursText(tag) }}</p>
-                    </div>
-                    <div class="rounded-xl bg-surface-container-low px-4 py-3">
-                      <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">已投入工时</p>
-                      <p class="font-manrope text-xl font-extrabold text-on-surface whitespace-nowrap">{{ actualHoursText(tag) }}</p>
-                    </div>
-                    <div class="rounded-xl bg-surface-container-low px-4 py-3">
-                      <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">项目进度</p>
-                      <p class="font-manrope text-xl font-extrabold text-primary whitespace-nowrap">{{ taskReferenceProgress(tag) }}%</p>
+                  <div class="flex flex-wrap items-center gap-3 text-xs text-on-surface-variant mb-3">
+                    <span>P：{{ plannedHoursText(tag) }}</span>
+                    <span>A：{{ actualHoursText(tag) }}</span>
+                    <span>进度：{{ taskReferenceProgress(tag) }}%</span>
+                  </div>
+                  <div>
+                    <div class="h-2 rounded-full bg-surface-container overflow-hidden">
+                      <div class="h-full rounded-full bg-primary transition-all" :style="`width: ${taskReferenceProgress(tag)}%`"></div>
                     </div>
                   </div>
                 </div>
