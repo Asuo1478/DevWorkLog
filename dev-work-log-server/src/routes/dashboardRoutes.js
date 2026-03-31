@@ -8,6 +8,7 @@ router.get('/weekly-trend', dashboardController.getWeeklyTrend);
 router.get('/work-log-detail', dashboardController.getWorkLogDetail);
 router.get('/work-log-export', dashboardController.exportWorkLogDetail);
 router.get('/alerts', dashboardController.getAlerts);
+router.get('/abnormal-hours', dashboardController.getAbnormalHours);
 router.put('/alerts/:id/resolve', dashboardController.resolveAlert);
 
 module.exports = router;

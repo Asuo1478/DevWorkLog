@@ -1,4 +1,4 @@
-﻿const { DevWorkLog, DevBlockingAlert, SysUser, ProjectTag, sequelize } = require('../models');
+const { DevWorkLog, DevBlockingAlert, SysUser, ProjectTag, sequelize } = require('../models');
 const { Op } = require('sequelize');
 const dayjs = require('dayjs');
 const quarterOfYear = require('dayjs/plugin/quarterOfYear');
@@ -338,6 +338,42 @@ const DashboardController = {
       res.status(200).send('\uFEFF' + csvRows.join('\n')); // BOM for excel utf-8
     } catch (error) {
       console.error('Export Error:', error);
+      next(error);
+    }
+  },
+
+  // Get employees with abnormal (insufficient) hours for a specific day
+  getAbnormalHours: async (req, res, next) => {
+    try {
+      const { threshold = 5, date = dayjs().format('YYYY-MM-DD') } = req.query;
+      
+      const sql = `
+        SELECT 
+          u.id, 
+          u.name, 
+          COALESCE(stat.total_hours, 0) as total_hours
+        FROM sys_user u
+        LEFT JOIN (
+          SELECT user_id, SUM(work_hours) as total_hours
+          FROM dev_work_log
+          WHERE log_date = :date
+          GROUP BY user_id
+        ) stat ON u.id = stat.user_id
+        WHERE u.status = 1 AND u.username != 'jhtadmin'
+        HAVING total_hours < :threshold
+        ORDER BY total_hours ASC;
+      `;
+
+      const list = await sequelize.query(sql, {
+        replacements: { 
+          date, 
+          threshold: Number(threshold) 
+        },
+        type: sequelize.QueryTypes.SELECT
+      });
+
+      res.success(list);
+    } catch (error) {
       next(error);
     }
   }

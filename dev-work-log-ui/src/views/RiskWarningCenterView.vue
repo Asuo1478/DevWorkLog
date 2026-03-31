@@ -1,5 +1,33 @@
 <script setup>
-import { computed } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
+
+const threshold = ref(5)
+const abnormalList = ref([])
+const abnormalLoading = ref(false)
+
+const fetchAbnormalHours = async () => {
+  abnormalLoading.value = true
+  try {
+    const res = await fetch(`/api/v1/dashboard/abnormal-hours?threshold=${threshold.value}`)
+    const json = await res.json()
+    if (json.code === 200) {
+      abnormalList.value = json.data || []
+    }
+  } catch (error) {
+    console.error('Failed to fetch abnormal hours:', error)
+  } finally {
+    abnormalLoading.value = false
+  }
+}
+
+watch(threshold, (val) => {
+  if (val === '' || val === null) return
+  fetchAbnormalHours()
+})
+
+onMounted(() => {
+  fetchAbnormalHours()
+})
 
 const riskOverview = [
   { key: 'active', label: '活动预警', value: 8, hint: '当前仍需跟进的预警事件' },
@@ -141,6 +169,50 @@ const typeStyle = (type) => {
 
 <template>
   <div class="px-8 py-8 space-y-8">
+    <!-- 1. 当日异常工时预警 (New) -->
+    <section v-if="abnormalList.length > 0 || threshold !== 5" class="bg-amber-50 rounded-2xl border border-amber-200 shadow-sm overflow-hidden">
+      <div class="px-6 py-4 flex flex-col md:flex-row md:items-center gap-6">
+        <div class="flex items-center gap-3 shrink-0">
+          <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 shadow-inner">
+            <span class="material-symbols-outlined text-[24px]">warning</span>
+          </div>
+          <div>
+            <h3 class="text-[15px] font-bold text-amber-900">今日异常工时预警</h3>
+            <div class="flex items-center gap-1.5 mt-0.5">
+              <span class="text-[11px] text-amber-700/70 font-medium">触发阈值:</span>
+              <input 
+                v-model.number="threshold" 
+                type="number" 
+                min="0" 
+                max="24"
+                class="w-12 bg-white/50 border border-amber-200 rounded px-1 py-0.5 text-[11px] font-bold text-amber-900 outline-none focus:border-amber-400 text-center"
+              />
+              <span class="text-[11px] text-amber-700/70 font-medium">小时</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex-1 min-w-0">
+          <div v-if="abnormalLoading" class="flex items-center gap-2 text-amber-600/60 text-xs italic">
+            <span class="animate-pulse">正在侦测异常工时...</span>
+          </div>
+          <div v-else-if="abnormalList.length > 0" class="flex flex-wrap gap-2">
+            <div 
+              v-for="user in abnormalList" 
+              :key="user.id"
+              class="inline-flex items-center gap-2 bg-white/60 border border-amber-200 px-3 py-1.5 rounded-lg shadow-sm hover:bg-white/80 transition-colors"
+            >
+              <span class="text-xs font-bold text-amber-900">{{ user.name }}</span>
+              <span class="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-mono font-bold">{{ user.total_hours }}h</span>
+            </div>
+          </div>
+          <div v-else class="text-amber-600/70 text-xs italic">
+            目前所有在职成员今日工时均已达标。
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
       <div
         v-for="item in riskOverview"
