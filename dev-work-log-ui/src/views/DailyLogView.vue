@@ -413,13 +413,17 @@ onMounted(async () => {
                   : 'bg-surface-container-lowest border-outline-variant/10 hover:border-primary/25'
               ]"
             >
-              <div class="flex items-center justify-between gap-3 mb-2">
+              <div class="flex items-center justify-between gap-3 mb-1.5">
                 <span :class="['text-[13px] font-bold truncate flex-1', Number(currentEntry.tagId) === Number(tag.tag_id) ? 'text-primary' : 'text-on-surface']">
                   {{ tag.tag_name }}
                 </span>
                 <span class="text-[11px] font-bold text-primary tabular-nums shrink-0">
                   {{ projectProgress(tag) }}%
                 </span>
+              </div>
+              <div class="flex items-center justify-between text-[10px] text-on-surface-variant font-medium mb-1.5 px-0.5">
+                <span>预计工时：{{ tag.budget_hours || 0 }}h</span>
+                <span>已投入：{{ tag.actual_hours || 0 }}h</span>
               </div>
               <div class="h-1 rounded-full bg-surface-container overflow-hidden">
                 <div
