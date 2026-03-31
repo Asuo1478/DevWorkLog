@@ -12,6 +12,7 @@ const isoDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(
 const entries = ref([])
 const projectTags = ref([])
 const shortcutTemplates = ref([])
+const isSubmitting = ref(false)
 const editingIndex = ref(-1)
 const submitSuccessMessage = ref('')
 const confirmModalVisible = ref(false)
@@ -164,6 +165,7 @@ const saveEntry = async () => {
     status: currentEntry.value.status
   }
 
+  isSubmitting.value = true
   try {
     const isEditing = editingIndex.value > -1
 
@@ -192,6 +194,8 @@ const saveEntry = async () => {
     }, 3000)
   } catch (error) {
     console.error(error)
+  } finally {
+    isSubmitting.value = false
   }
 }
 
@@ -500,9 +504,14 @@ onMounted(async () => {
               <button v-if="editingIndex > -1" @click="cancelEdit" class="px-5 py-2.5 rounded-lg border border-outline-variant/30 text-on-surface hover:bg-surface-container transition-colors font-bold text-xs">
                 取消编辑
               </button>
-              <button @click="saveEntry" :disabled="!currentEntry.desc || currentEntry.hours <= 0" class="px-6 py-2.5 rounded-lg bg-on-surface text-surface font-bold text-xs shadow hover:bg-on-surface/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5">
-                <span class="material-symbols-outlined text-[16px]">save</span>
-                {{ editingIndex > -1 ? '保存修改' : '确认添加项' }}
+              <button 
+                @click="saveEntry" 
+                :disabled="isSubmitting || !currentEntry.desc || currentEntry.hours <= 0" 
+                class="px-6 py-2.5 rounded-lg bg-on-surface text-surface font-bold text-xs shadow hover:bg-on-surface/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+              >
+                <span v-if="isSubmitting" class="material-symbols-outlined text-[16px] animate-spin">sync</span>
+                <span v-else class="material-symbols-outlined text-[16px]">save</span>
+                {{ isSubmitting ? '保存中...' : (editingIndex > -1 ? '保存修改' : '确认添加项') }}
               </button>
             </div>
           </div>
