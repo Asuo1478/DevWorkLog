@@ -125,7 +125,7 @@ CREATE TABLE `goal_config`  (
 DROP TABLE IF EXISTS `goal_define`;
 CREATE TABLE `goal_define`  (
   `goal_id` bigint(0) NOT NULL AUTO_INCREMENT COMMENT '主键',
-  `goal_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '目标名称',
+  `goal_name` varchar(100) NOT NULL COMMENT '目标名称',
   `goal_desc` varchar(500) NULL DEFAULT NULL COMMENT '目标说明',
   `sort_no` int(0) NULL DEFAULT 0 COMMENT '排序',
   `status` tinyint(0) NULL DEFAULT 1 COMMENT '1启用 0停用',
@@ -143,7 +143,7 @@ CREATE TABLE `goal_define`  (
 DROP TABLE IF EXISTS `project_tag`;
 CREATE TABLE `project_tag`  (
   `tag_id` bigint(0) NOT NULL AUTO_INCREMENT COMMENT '主键',
-  `tag_name` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'Tag名称',
+  `tag_name` varchar(200) NOT NULL COMMENT 'Tag名称',
   `goal_id` bigint(0) NOT NULL COMMENT '关联目标分类',
   `year` int(0) NOT NULL COMMENT '首次立项年份',
   `start_date` date NULL DEFAULT NULL COMMENT '开始日期',
@@ -165,7 +165,29 @@ CREATE TABLE `project_tag`  (
   INDEX `idx_goal_id`(`goal_id`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COMMENT = '项目 Tag 生命周期管理表' ROW_FORMAT = Dynamic;
 
-
+DROP TABLE IF EXISTS `user_task`;
+CREATE TABLE `user_task`  (
+  `task_id` bigint(0) NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `user_id` bigint(0) NOT NULL COMMENT '用户ID',
+  `tag_id` bigint(0) NULL DEFAULT NULL COMMENT '项目Tag',
+  `year` int(0) NOT NULL COMMENT '年份',
+  `month` tinyint(0) NOT NULL COMMENT '月份',
+  `week` tinyint(0) NOT NULL COMMENT '周序号',
+  `week_start_date` date NULL DEFAULT NULL COMMENT '周开始日期',
+  `week_end_date` date NULL DEFAULT NULL COMMENT '周结束日期',
+  `p_hours` decimal(8, 2) NULL DEFAULT 0.00 COMMENT '计划工时',
+  `task_name` varchar(100) NOT NULL COMMENT '规划名称',
+  `task_content` varchar(500) NULL DEFAULT NULL COMMENT '本周规划内容',
+  `task_status` varchar(20) NULL DEFAULT '待启动' COMMENT '待启动/进行中/已完成/已关闭',
+  `completion_rate` decimal(5, 2) NULL DEFAULT 0.00 COMMENT '完成度',
+  `create_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '创建时间',
+  `update_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0) COMMENT '更新时间',
+  PRIMARY KEY (`task_id`) USING BTREE,
+  INDEX `idx_user_week`(`user_id`, `year`, `month`, `week`) USING BTREE,
+  INDEX `idx_tag_week`(`tag_id`, `year`, `month`, `week`) USING BTREE,
+  INDEX `idx_user_id`(`user_id`) USING BTREE,
+  INDEX `idx_tag_id`(`tag_id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 COMMENT = '个人周规划任务表' ROW_FORMAT = Dynamic;
 
 /*
  Navicat Premium Data Transfer
@@ -192,9 +214,9 @@ SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS `sys_dictionary`;
 CREATE TABLE `sys_dictionary`  (
   `id` bigint(0) NOT NULL AUTO_INCREMENT COMMENT '主键',
-  `dict_type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '字典类型 (如: PRODUCT_TYPE, TASK_CATEGORY)',
-  `dict_label` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '显示标签',
-  `dict_value` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '对应值',
+  `dict_type` varchar(32) NOT NULL COMMENT '字典类型 (如: PRODUCT_TYPE, TASK_CATEGORY)',
+  `dict_label` varchar(64) NOT NULL COMMENT '显示标签',
+  `dict_value` varchar(64) NOT NULL COMMENT '对应值',
   `sort_no` int(0) NULL DEFAULT 0 COMMENT '排序编号 (越小越靠前)',
   `status` tinyint(0) NULL DEFAULT 1 COMMENT '状态 (1:启用, 0:禁用)',
   `create_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0),
