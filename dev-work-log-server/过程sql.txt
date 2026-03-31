@@ -93,3 +93,131 @@ ORDER BY a.user_id DESC
 alter table dev_work_log add tag_id BIGINT NOT NULL DEFAULT 0  COMMENT '项目TagID' after user_id;
 alter table dev_work_log add is_shortcut TINYINT NOT NULL DEFAULT 0 COMMENT '是否快捷引用：0=否、1=是' after status;
 alter table dev_work_log add shortcut_name VARCHAR(64) DEFAULT NULL COMMENT '快捷登记名称' after is_shortcut;
+
+-- 针对 dev_blocking_alert 新增项目TagID
+alter table dev_blocking_alert add tag_id BIGINT NOT NULL DEFAULT 0  COMMENT '项目TagID' after user_id;
+
+
+-- ----------------------------
+-- Table structure for goal_config
+-- ----------------------------
+DROP TABLE IF EXISTS `goal_config`;
+CREATE TABLE `goal_config`  (
+  `config_id` bigint(0) NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `goal_id` bigint(0) NOT NULL COMMENT '关联目标分类',
+  `year` int(0) NOT NULL COMMENT '年份',
+  `month` tinyint(0) NOT NULL COMMENT '月份',
+  `weight` decimal(5, 2) NULL DEFAULT NULL COMMENT '权重百分比',
+  `budget_days` decimal(8, 2) NULL DEFAULT NULL COMMENT '预算人天',
+  `remark` varchar(500) NULL DEFAULT NULL COMMENT '备注',
+  `create_by` bigint(0) NULL DEFAULT NULL COMMENT '创建人',
+  `update_by` bigint(0) NULL DEFAULT NULL COMMENT '更新人',
+  `create_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '创建时间',
+  `update_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0) COMMENT '更新时间',
+  PRIMARY KEY (`config_id`) USING BTREE,
+  UNIQUE INDEX `uk_goal_month`(`goal_id`, `year`, `month`) USING BTREE,
+  INDEX `idx_goal_id`(`goal_id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COMMENT = '月度目标权重与预算配置表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for goal_define
+-- ----------------------------
+DROP TABLE IF EXISTS `goal_define`;
+CREATE TABLE `goal_define`  (
+  `goal_id` bigint(0) NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `goal_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '目标名称',
+  `goal_desc` varchar(500) NULL DEFAULT NULL COMMENT '目标说明',
+  `sort_no` int(0) NULL DEFAULT 0 COMMENT '排序',
+  `status` tinyint(0) NULL DEFAULT 1 COMMENT '1启用 0停用',
+  `create_by` bigint(0) NULL DEFAULT NULL COMMENT '创建人',
+  `update_by` bigint(0) NULL DEFAULT NULL COMMENT '更新人',
+  `create_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '创建时间',
+  `update_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0) COMMENT '更新时间',
+  PRIMARY KEY (`goal_id`) USING BTREE,
+  INDEX `idx_status_sort`(`status`, `sort_no`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COMMENT = '团队目标分类定义表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for project_tag
+-- ----------------------------
+DROP TABLE IF EXISTS `project_tag`;
+CREATE TABLE `project_tag`  (
+  `tag_id` bigint(0) NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `tag_name` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'Tag名称',
+  `goal_id` bigint(0) NOT NULL COMMENT '关联目标分类',
+  `year` int(0) NOT NULL COMMENT '首次立项年份',
+  `start_date` date NULL DEFAULT NULL COMMENT '开始日期',
+  `end_date` date NULL DEFAULT NULL COMMENT '计划结束日期',
+  `budget_days` decimal(8, 2) NULL DEFAULT NULL COMMENT '预算人天',
+  `budget_hours` decimal(10, 2) NULL DEFAULT NULL COMMENT '预算工时',
+  `priority` varchar(20) NULL DEFAULT NULL COMMENT '优先级',
+  `status` varchar(20) NULL DEFAULT '待启动' COMMENT '待启动/进行中/已完成/已关闭',
+  `progress_rate` decimal(5, 2) NULL DEFAULT 0.00 COMMENT '手工或系统计算进度',
+  `last_log_date` date NULL DEFAULT NULL COMMENT '最近日志日期',
+  `tag_desc` varchar(500) NULL DEFAULT NULL COMMENT '说明',
+  `create_by` bigint(0) NULL DEFAULT NULL COMMENT '创建人',
+  `update_by` bigint(0) NULL DEFAULT NULL COMMENT '更新人',
+  `create_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '创建时间',
+  `update_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0) COMMENT '更新时间',
+  PRIMARY KEY (`tag_id`) USING BTREE,
+  INDEX `idx_goal_status`(`goal_id`, `status`) USING BTREE,
+  INDEX `idx_last_log_date`(`last_log_date`) USING BTREE,
+  INDEX `idx_goal_id`(`goal_id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COMMENT = '项目 Tag 生命周期管理表' ROW_FORMAT = Dynamic;
+
+
+
+/*
+ Navicat Premium Data Transfer
+
+ Source Server         : dev-mysql8
+ Source Server Type    : MySQL
+ Source Server Version : 80045
+ Source Host           : 192.168.100.78:3306
+ Source Schema         : db_DevWorkLog
+
+ Target Server Type    : MySQL
+ Target Server Version : 80045
+ File Encoding         : 65001
+
+ Date: 31/03/2026 16:35:59
+*/
+
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- ----------------------------
+-- Table structure for sys_dictionary
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_dictionary`;
+CREATE TABLE `sys_dictionary`  (
+  `id` bigint(0) NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `dict_type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '字典类型 (如: PRODUCT_TYPE, TASK_CATEGORY)',
+  `dict_label` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '显示标签',
+  `dict_value` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '对应值',
+  `sort_no` int(0) NULL DEFAULT 0 COMMENT '排序编号 (越小越靠前)',
+  `status` tinyint(0) NULL DEFAULT 1 COMMENT '状态 (1:启用, 0:禁用)',
+  `create_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0),
+  `update_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0),
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_type_status_sort`(`dict_type`, `status`, `sort_no`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COMMENT = '通用字典表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of sys_dictionary
+-- ----------------------------
+INSERT INTO `sys_dictionary` VALUES (1, 'PRODUCT_TYPE', '预售营销', '预售营销', 10, 1, '2026-03-31 14:12:59', '2026-03-31 14:12:59');
+INSERT INTO `sys_dictionary` VALUES (2, 'PRODUCT_TYPE', '溯源营销', '溯源营销', 20, 1, '2026-03-31 14:13:08', '2026-03-31 14:13:08');
+INSERT INTO `sys_dictionary` VALUES (3, 'PRODUCT_TYPE', '会展管理信息化', '会展管理信息化', 30, 1, '2026-03-31 14:13:33', '2026-03-31 14:13:33');
+INSERT INTO `sys_dictionary` VALUES (4, 'PRODUCT_TYPE', '企业内部信息化', '企业内部信息化', 40, 1, '2026-03-31 14:14:14', '2026-03-31 14:14:14');
+INSERT INTO `sys_dictionary` VALUES (5, 'PRODUCT_TYPE', '其他（企业IT集成等）', '其他（企业IT集成等）', 50, 1, '2026-03-31 14:16:43', '2026-03-31 14:16:43');
+INSERT INTO `sys_dictionary` VALUES (6, 'TASK_CATEGORY', '需求对接', '需求对接', 10, 1, '2026-03-31 14:17:16', '2026-03-31 14:17:16');
+INSERT INTO `sys_dictionary` VALUES (7, 'TASK_CATEGORY', '需求开发', '需求开发', 20, 1, '2026-03-31 14:17:24', '2026-03-31 14:17:24');
+INSERT INTO `sys_dictionary` VALUES (8, 'TASK_CATEGORY', 'Bug修复', 'Bug修复', 30, 1, '2026-03-31 14:17:28', '2026-03-31 14:17:28');
+INSERT INTO `sys_dictionary` VALUES (9, 'TASK_CATEGORY', '测试部署', '测试部署', 40, 1, '2026-03-31 14:17:42', '2026-03-31 14:17:42');
+INSERT INTO `sys_dictionary` VALUES (10, 'TASK_CATEGORY', '培训&会议', '培训&会议', 50, 1, '2026-03-31 14:18:01', '2026-03-31 14:18:01');
+INSERT INTO `sys_dictionary` VALUES (11, 'TASK_CATEGORY', '制图&PPT&推广', '制图&PPT&推广', 60, 1, '2026-03-31 14:18:55', '2026-03-31 14:18:55');
+INSERT INTO `sys_dictionary` VALUES (12, 'TASK_CATEGORY', '知识产权建设', '知识产权建设', 70, 1, '2026-03-31 14:19:36', '2026-03-31 14:20:36');
+INSERT INTO `sys_dictionary` VALUES (13, 'TASK_CATEGORY', '其他（出差、远程协助等）', '其他（出差、远程协助等）', 80, 1, '2026-03-31 14:21:20', '2026-03-31 14:21:20');
+
+SET FOREIGN_KEY_CHECKS = 1;

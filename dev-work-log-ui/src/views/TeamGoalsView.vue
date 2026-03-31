@@ -358,15 +358,21 @@ onMounted(async () => {
       </div>
 
       <div v-if="activeTab === 'resource-plan'" class="p-6 space-y-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div class="bg-surface-container-low rounded-xl px-5 py-4 border border-outline-variant/10">
             <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">规划月份</p>
             <h4 class="text-xl font-manrope font-extrabold text-primary">{{ monthLabel }}</h4>
           </div>
           <div class="bg-surface-container-low rounded-xl px-5 py-4 border border-outline-variant/10">
-            <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">总权重 / 总预算人天</p>
+            <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">总权重</p>
             <h4 class="text-xl font-manrope font-extrabold text-on-surface">
-              {{ resourcePlanSummary.total_weight }}% / {{ resourcePlanSummary.total_budget_days }}
+              {{ resourcePlanSummary.total_weight }}%
+            </h4>
+          </div>
+          <div class="bg-surface-container-low rounded-xl px-5 py-4 border border-outline-variant/10">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">总预算人天</p>
+            <h4 class="text-xl font-manrope font-extrabold text-on-surface">
+              {{ resourcePlanSummary.total_budget_days }}
             </h4>
           </div>
           <div class="bg-surface-container-low rounded-xl px-5 py-4 border border-outline-variant/10">
