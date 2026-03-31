@@ -71,7 +71,7 @@ const ensureDefaultDictionary = () => {
 
 const fetchProjectTags = async () => {
   try {
-    const res = await fetch('/api/v1/project-tags/active')
+    const res = await fetch('/api/v1/project-tags/planning?status=进行中')
     const json = await res.json()
     if (json.code === 200) {
       projectTags.value = json.data || []
@@ -80,6 +80,13 @@ const fetchProjectTags = async () => {
   } catch (error) {
     console.error(error)
   }
+}
+
+const projectProgress = (project) => {
+  const budgetHours = Number(project.budget_hours || 0)
+  const actualHours = Number(project.actual_hours || 0)
+  if (!budgetHours || Number.isNaN(budgetHours)) return 0
+  return Number(Math.min((actualHours / budgetHours) * 100, 100).toFixed(0))
 }
 
 const fetchShortcutTemplates = async () => {
@@ -396,27 +403,25 @@ onMounted(async () => {
               :key="tag.tag_id"
               @click="currentEntry.tagId = tag.tag_id"
               :class="[
-                'w-full text-left rounded-xl border px-4 py-3 transition-all',
+                'w-full text-left rounded-xl border px-3 py-2.5 transition-all outline-none',
                 Number(currentEntry.tagId) === Number(tag.tag_id)
-                  ? 'bg-white border-primary/30 shadow-sm'
-                  : 'bg-surface-container-lowest border-outline-variant/10 hover:border-primary/20'
+                  ? 'bg-white border-primary/40 shadow-sm ring-1 ring-primary/10'
+                  : 'bg-surface-container-lowest border-outline-variant/10 hover:border-primary/25'
               ]"
             >
-              <div class="flex items-center justify-between gap-3">
-                <span class="text-sm font-bold text-on-surface">{{ tag.tag_name }}</span>
-                <span class="px-2 py-0.5 text-[10px] font-bold rounded bg-primary/10 text-primary">{{ tag.status }}</span>
+              <div class="flex items-center justify-between gap-3 mb-2">
+                <span :class="['text-[13px] font-bold truncate flex-1', Number(currentEntry.tagId) === Number(tag.tag_id) ? 'text-primary' : 'text-on-surface']">
+                  {{ tag.tag_name }}
+                </span>
+                <span class="text-[11px] font-bold text-primary tabular-nums shrink-0">
+                  {{ projectProgress(tag) }}%
+                </span>
               </div>
-              <div class="mt-2">
-                <div class="flex items-center justify-between text-[11px] text-on-surface-variant mb-1">
-                  <span>进度</span>
-                  <span>{{ Number(tag.progress_rate || 0).toFixed(0) }}%</span>
-                </div>
-                <div class="h-2 rounded-full bg-surface-container overflow-hidden">
-                  <div
-                    class="h-full bg-primary rounded-full transition-all duration-300"
-                    :style="`width: ${Math.min(Number(tag.progress_rate || 0), 100)}%`"
-                  ></div>
-                </div>
+              <div class="h-1 rounded-full bg-surface-container overflow-hidden">
+                <div
+                  class="h-full bg-primary rounded-full transition-all duration-500"
+                  :style="`width: ${projectProgress(tag)}%`"
+                ></div>
               </div>
             </button>
           </div>
