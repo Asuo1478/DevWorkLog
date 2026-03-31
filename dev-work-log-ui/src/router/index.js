@@ -10,6 +10,7 @@ import ProjectResourceBoardView from '@/views/ProjectResourceBoardView.vue'
 import RiskWarningCenterView from '@/views/RiskWarningCenterView.vue'
 import EmployeeView from '@/views/EmployeeView.vue'
 import ProfileView from '@/views/ProfileView.vue'
+import DictionaryMgmtView from '@/views/DictionaryMgmtView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -85,6 +86,12 @@ const router = createRouter({
           name: 'profile',
           component: ProfileView,
           meta: { requiresAuth: true }
+        },
+        {
+          path: 'dictionaries',
+          name: 'dictionaries',
+          component: DictionaryMgmtView,
+          meta: { requiresAuth: true, requiresAdmin: true }
         }
       ]
     }

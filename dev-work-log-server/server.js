@@ -12,6 +12,7 @@ const dashboardRoutes = require('./src/routes/dashboardRoutes');
 const projectTagRoutes = require('./src/routes/projectTagRoutes');
 const goalDefineRoutes = require('./src/routes/goalDefineRoutes');
 const userTaskRoutes = require('./src/routes/userTaskRoutes');
+const dictionaryRoutes = require('./src/routes/dictionaryRoutes');
 
 const app = express();
 
@@ -33,6 +34,7 @@ app.use('/api/v1/dashboard', dashboardRoutes);
 app.use('/api/v1/project-tags', projectTagRoutes);
 app.use('/api/v1/goal-defines', goalDefineRoutes);
 app.use('/api/v1/user-tasks', userTaskRoutes);
+app.use('/api/v1/dictionaries', dictionaryRoutes);
 
 // Error Handling (should be the last middleware)
 app.use(errorHandler);

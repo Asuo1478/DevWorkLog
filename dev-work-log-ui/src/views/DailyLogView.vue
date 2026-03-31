@@ -1,8 +1,10 @@
-﻿<script setup>
+<script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '../stores/auth'
+import { useDictionaryStore } from '../stores/dictionary'
 
 const authStore = useAuthStore()
+const dictionaryStore = useDictionaryStore()
 const today = new Date()
 const todayFormatted = `${today.getFullYear()}年${String(today.getMonth() + 1).padStart(2, '0')}月${String(today.getDate()).padStart(2, '0')}日`
 const isoDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
@@ -16,6 +18,11 @@ const confirmModalVisible = ref(false)
 const confirmModalTitle = ref('')
 const confirmModalMessage = ref('')
 const confirmModalAction = ref(null)
+
+const shortcutModalVisible = ref(false)
+const shortcutModalName = ref('')
+const shortcutModalError = ref('')
+const shortcutModalEntry = ref(null)
 
 const defaultEntry = () => ({
   id: null,
@@ -50,6 +57,15 @@ const ensureDefaultTag = () => {
   const matched = activeTagOptions.value.some(tag => Number(tag.tag_id) === Number(currentEntry.value.tagId))
   if (!matched) {
     currentEntry.value.tagId = activeTagOptions.value[0].tag_id
+  }
+}
+
+const ensureDefaultDictionary = () => {
+  if (dictionaryStore.productTypes.length > 0 && !dictionaryStore.productTypes.some(p => p.dict_value === currentEntry.value.product)) {
+    currentEntry.value.product = dictionaryStore.productTypes[0].dict_value
+  }
+  if (dictionaryStore.taskCategories.length > 0 && !dictionaryStore.taskCategories.some(c => c.dict_value === currentEntry.value.category)) {
+    currentEntry.value.category = dictionaryStore.taskCategories[0].dict_value
   }
 }
 
@@ -259,17 +275,28 @@ const updateShortcutStatus = async (entry, isShortcut) => {
   }
 }
 
-const addToShortcut = async (entry) => {
-  const defaultName = entry.shortcutName || buildShortcutName(entry)
-  const shortcutName = window.prompt('请输入快捷登记名称', defaultName)
-  if (shortcutName === null) return
+const addToShortcut = (entry) => {
+  shortcutModalEntry.value = entry
+  shortcutModalName.value = entry.shortcutName || buildShortcutName(entry)
+  shortcutModalError.value = ''
+  shortcutModalVisible.value = true
+}
 
-  const trimmedName = shortcutName.trim()
+const closeShortcutModal = () => {
+  shortcutModalVisible.value = false
+  shortcutModalEntry.value = null
+  shortcutModalName.value = ''
+  shortcutModalError.value = ''
+}
+
+const submitShortcutModal = async () => {
+  const trimmedName = shortcutModalName.value.trim()
   if (!trimmedName) {
-    window.alert('快捷登记名称不能为空')
+    shortcutModalError.value = '快捷登记名称不能为空'
     return
   }
 
+  const entry = shortcutModalEntry.value
   await fetch(`/api/v1/work-logs/${entry.id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
@@ -279,6 +306,7 @@ const addToShortcut = async (entry) => {
     })
   })
   await Promise.all([fetchLogs(), fetchShortcutTemplates()])
+  closeShortcutModal()
 }
 
 const removeShortcut = async (shortcut) => {
@@ -307,10 +335,15 @@ const exportData = () => {
   window.location.href = `/api/v1/work-logs/export?startDate=${isoDate}&endDate=${isoDate}&userId=${authStore.user.id}`
 }
 
-onMounted(() => {
+onMounted(async () => {
   fetchProjectTags()
   fetchShortcutTemplates()
   fetchLogs()
+  await Promise.all([
+    dictionaryStore.fetchDictionaryByType('PRODUCT_TYPE'),
+    dictionaryStore.fetchDictionaryByType('TASK_CATEGORY')
+  ])
+  ensureDefaultDictionary()
 })
 </script>
 
@@ -411,25 +444,13 @@ onMounted(() => {
             <div class="space-y-1.5">
               <label class="font-label text-[10px] font-bold uppercase tracking-widest text-outline">关联产品</label>
               <select v-model="currentEntry.product" class="w-full bg-surface-container-low border-none rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 appearance-none font-medium text-on-surface outline-none cursor-pointer hover:bg-surface-container transition-colors">
-                <option>预售营销</option>
-                <option>溯源营销</option>
-                <option>会展信息化</option>
-                <option>内部信息化</option>
-                <option>其他</option>
+                <option v-for="item in dictionaryStore.productTypes" :key="item.id" :value="item.dict_value">{{ item.dict_label }}</option>
               </select>
             </div>
             <div class="space-y-1.5">
               <label class="font-label text-[10px] font-bold uppercase tracking-widest text-outline">任务类别</label>
               <select v-model="currentEntry.category" class="w-full bg-surface-container-low border-none rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 appearance-none font-medium text-on-surface outline-none cursor-pointer hover:bg-surface-container transition-colors">
-                <option>需求对接</option>
-                <option>需求开发</option>
-                <option>Bug修复</option>
-                <option>测试部署</option>
-                <option>培训|会议</option>
-                <option>PPT|平台推广</option>
-                <option>专利软著</option>
-                <option>项目申报</option>
-                <option>其他</option>
+                <option v-for="item in dictionaryStore.taskCategories" :key="item.id" :value="item.dict_value">{{ item.dict_label }}</option>
               </select>
             </div>
           </div>
@@ -612,6 +633,47 @@ onMounted(() => {
           class="min-w-[108px] rounded-[18px] bg-[#c81e1e] px-6 py-3 text-[15px] font-bold text-white hover:opacity-95"
         >
           删除
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div v-if="shortcutModalVisible" class="fixed inset-0 z-[70] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/35 backdrop-blur-[1px]" @click="closeShortcutModal"></div>
+    <div class="relative w-full max-w-[520px] rounded-[24px] bg-white shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+      <div class="px-8 pt-8 pb-6">
+        <div class="flex items-center gap-3 mb-4 font-headline">
+          <span class="material-symbols-outlined text-primary text-xl">bolt</span>
+          <h3 class="text-[18px] font-bold text-on-surface">存为快捷登记</h3>
+        </div>
+        <p class="text-[13px] text-on-surface-variant mb-5 leading-relaxed">
+          您可以为该工作项设置一个名称，方便日后一键填报。
+        </p>
+        <div class="space-y-1.5">
+          <label class="text-[10px] font-bold uppercase tracking-widest text-outline px-1">描述名称</label>
+          <input 
+            v-model="shortcutModalName"
+            type="text" 
+            class="w-full bg-surface-container-low border-none rounded-xl px-4 py-3.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all font-bold"
+            placeholder="例如：系统日常巡检"
+            @keyup.enter="submitShortcutModal"
+          />
+          <p v-if="shortcutModalError" class="text-xs text-error font-bold px-1 mt-1">{{ shortcutModalError }}</p>
+        </div>
+      </div>
+      <div class="px-8 pb-8 flex justify-end gap-3">
+        <button
+          @click="closeShortcutModal"
+          class="min-w-[96px] rounded-[16px] bg-surface-container-low px-5 py-2.5 text-[14px] font-bold text-on-surface-variant hover:bg-surface-container transition-colors"
+        >
+          取消
+        </button>
+        <button
+          @click="submitShortcutModal"
+          class="min-w-[110px] rounded-[16px] bg-on-surface px-5 py-2.5 text-[14px] font-bold text-surface hover:opacity-90 transition-all flex items-center justify-center gap-2"
+        >
+          <span class="material-symbols-outlined text-lg">check</span>
+          确认添加
         </button>
       </div>
     </div>

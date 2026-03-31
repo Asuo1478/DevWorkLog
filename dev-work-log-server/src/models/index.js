@@ -1,4 +1,4 @@
-﻿const sequelize = require('../config/database');
+const sequelize = require('../config/database');
 const SysUser = require('./SysUser');
 const DevWorkLog = require('./DevWorkLog');
 const DevBlockingAlert = require('./DevBlockingAlert');
@@ -6,6 +6,7 @@ const ProjectTag = require('./ProjectTag');
 const GoalDefine = require('./GoalDefine');
 const GoalConfig = require('./GoalConfig');
 const UserTask = require('./UserTask');
+const SysDictionary = require('./SysDictionary');
 
 SysUser.hasMany(DevWorkLog, { foreignKey: 'user_id' });
 DevWorkLog.belongsTo(SysUser, { foreignKey: 'user_id' });
@@ -39,5 +40,6 @@ module.exports = {
   ProjectTag,
   GoalDefine,
   GoalConfig,
-  UserTask
+  UserTask,
+  SysDictionary
 };

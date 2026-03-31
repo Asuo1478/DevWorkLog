@@ -3,8 +3,10 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { VueDatePicker } from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 import { useAuthStore } from '../stores/auth'
+import { useDictionaryStore } from '../stores/dictionary'
 
 const authStore = useAuthStore()
+const dictionaryStore = useDictionaryStore()
 
 // 是否是管理员（jhtadmin 可以查看所有人数据）
 const isAdmin = computed(() => authStore.user.identifier === 'jhtadmin')
@@ -128,6 +130,8 @@ watch([statMode, dateRange, currentPage], () => {
 
 onMounted(() => {
   fetchRecords()
+  dictionaryStore.fetchDictionaryByType('PRODUCT_TYPE')
+  dictionaryStore.fetchDictionaryByType('TASK_CATEGORY')
 })
 
 const totalPages = computed(() => Math.max(1, Math.ceil(totalCount.value / pageSize)))
@@ -153,26 +157,14 @@ const paginationInfo = computed(() => {
             <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">关联产品</label>
             <select v-model="filterProduct" @change="fetchRecords" class="w-full bg-surface-container-low border-none rounded-lg text-sm px-4 py-2.5 focus:ring-2 focus:ring-primary-fixed-dim outline-none text-on-surface">
               <option>全部产品</option>
-              <option>预售营销</option>
-              <option>溯源营销</option>
-              <option>会展信息化</option>
-              <option>内部信息化</option>
-              <option>其他</option>
+              <option v-for="item in dictionaryStore.productTypes" :key="item.id" :value="item.dict_value">{{ item.dict_label }}</option>
             </select>
           </div>
           <div class="space-y-1.5">
             <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">任务类别</label>
             <select v-model="filterCategory" @change="fetchRecords" class="w-full bg-surface-container-low border-none rounded-lg text-sm px-4 py-2.5 focus:ring-2 focus:ring-primary-fixed-dim outline-none text-on-surface">
               <option>全部类别</option>
-              <option>需求对接</option>
-              <option>需求开发</option>
-              <option>Bug修复</option>
-              <option>测试部署</option>
-              <option>培训|会议</option>
-              <option>PPT|平台推广</option>
-              <option>专利软著</option>
-              <option>项目申报</option>
-              <option>其他</option>
+              <option v-for="item in dictionaryStore.taskCategories" :key="item.id" :value="item.dict_value">{{ item.dict_label }}</option>
             </select>
           </div>
           <div class="space-y-1.5">

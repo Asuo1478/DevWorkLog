@@ -127,6 +127,20 @@ const handleLogout = () => {
         <span class="material-symbols-outlined">group</span>
         <span class="font-manrope text-sm tracking-tight">账号管理</span>
       </router-link>
+
+      <router-link
+        v-if="authStore.isAdmin"
+        to="/dictionaries"
+        :class="[
+          'flex items-center space-x-3 px-4 py-3 rounded-lg transition-transform duration-200',
+          isActive('/dictionaries')
+            ? 'bg-white dark:bg-slate-800 text-[#00488d] dark:text-blue-400 font-semibold shadow-sm translate-x-1'
+            : 'text-slate-600 dark:text-slate-400 hover:text-[#00488d] hover:bg-[#dbdad9] dark:hover:bg-slate-800 hover:translate-x-1'
+        ]"
+      >
+        <span class="material-symbols-outlined">settings_input_component</span>
+        <span class="font-manrope text-sm tracking-tight">字典管理</span>
+      </router-link>
     </nav>
 
     <div class="pt-4 border-t border-outline-variant/20 space-y-1">
