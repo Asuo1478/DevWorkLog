@@ -503,35 +503,35 @@ onMounted(async () => {
           </div>
         </div>
 
-        <div class="px-5 py-3 rounded-xl bg-surface-container-lowest shadow-sm border border-outline-variant/10">
-          <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div class="px-4 py-2 rounded-xl bg-surface-container-lowest shadow-sm border border-outline-variant/10">
+          <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <div class="flex items-center gap-2 shrink-0">
-              <span class="material-symbols-outlined text-primary text-[18px]">bolt</span>
-              <h3 class="font-headline text-sm font-bold text-on-surface">快捷登记</h3>
+              <span class="material-symbols-outlined text-primary text-[17px]">bolt</span>
+              <h3 class="font-headline text-xs font-bold text-on-surface">快捷登记</h3>
             </div>
             <div v-if="shortcutTemplates.length > 0" class="flex-1 min-w-0 flex flex-wrap gap-2">
               <div
                 v-for="shortcut in shortcutTemplates"
                 :key="shortcut.id"
-                class="w-full md:w-auto inline-flex items-center gap-2 rounded-full border border-outline-variant/10 bg-surface-container-low px-2 py-2"
+                class="w-full md:w-auto inline-flex items-center gap-2 rounded-full border border-outline-variant/10 bg-surface-container-low px-2 py-1"
               >
                 <button
                   @click="applyShortcut(shortcut)"
-                  class="inline-flex items-center gap-3 rounded-full px-2 py-0.5 text-left hover:bg-white transition-all"
+                  class="inline-flex items-center gap-2 rounded-full px-1.5 py-0 text-left hover:bg-white transition-all"
                 >
-                  <span class="font-bold text-sm text-on-surface">{{ shortcut.title }}</span>
-                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary">{{ shortcut.hours }}h</span>
+                  <span class="font-bold text-xs text-on-surface">{{ shortcut.title }}</span>
+                  <span class="text-[9px] font-bold px-1.5 py-0 rounded-full bg-primary/10 text-primary">{{ shortcut.hours }}h</span>
                 </button>
                 <button
                   @click="removeShortcut(shortcut)"
-                  class="inline-flex h-5 w-5 items-center justify-center rounded-full text-on-surface-variant hover:bg-error/10 hover:text-error"
+                  class="inline-flex h-4 w-4 items-center justify-center rounded-full text-on-surface-variant hover:bg-error/10 hover:text-error"
                   title="移除快捷登记"
                 >
-                  <span class="material-symbols-outlined text-[12px]">close</span>
+                  <span class="material-symbols-outlined text-[11px]">close</span>
                 </button>
               </div>
             </div>
-            <p v-else class="text-sm text-on-surface-variant">
+            <p v-else class="text-xs text-on-surface-variant">
               当前无日志快捷引用，你可以通过“当日已填报记录”列表的⚡操作完成添加。
             </p>
           </div>
@@ -539,14 +539,14 @@ onMounted(async () => {
 
         <div class="h-2"></div>
 
-        <div v-if="entries.length > 0" class="space-y-4">
-          <div class="flex justify-between items-center mb-4">
-            <h4 class="font-label text-xs font-bold text-outline uppercase tracking-widest pl-1 flex items-center gap-2">
-              <span class="material-symbols-outlined text-[16px]">list_alt</span>
+        <div v-if="entries.length > 0" class="space-y-2">
+          <div class="flex justify-between items-center mb-2">
+            <h4 class="font-label text-[11px] font-bold text-outline uppercase tracking-widest pl-1 flex items-center gap-2">
+              <span class="material-symbols-outlined text-[15px]">list_alt</span>
               当日已填报记录 ({{ entries.length }})
             </h4>
-            <button @click="exportData" class="flex items-center space-x-1.5 text-primary font-bold text-xs px-3 py-1.5 hover:bg-primary/5 rounded-lg transition-colors border border-primary/20">
-              <span class="material-symbols-outlined text-[16px]">download</span>
+            <button @click="exportData" class="flex items-center space-x-1 text-primary font-bold text-[11px] px-2.5 py-1 hover:bg-primary/5 rounded-lg transition-colors border border-primary/20">
+              <span class="material-symbols-outlined text-[14px]">download</span>
               <span>导出数据</span>
             </button>
           </div>
@@ -557,7 +557,7 @@ onMounted(async () => {
                 v-for="(item, index) in entries"
                 :key="item.id"
                 :class="[
-                  'p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4 transition-colors group',
+                  'p-2 sm:p-3 flex flex-col sm:flex-row sm:items-center gap-4 transition-colors group',
                   editingIndex === index ? 'bg-primary/5 border-l-4 border-l-primary' : 'hover:bg-surface-container-low border-l-4 border-transparent'
                 ]"
               >
@@ -565,44 +565,44 @@ onMounted(async () => {
                   {{ entries.length - index }}
                 </div>
 
-                <div class="flex-1 min-w-0 grid grid-cols-12 gap-3 sm:gap-4 items-center">
-                  <div class="col-span-12 sm:col-span-4 flex flex-wrap items-center gap-1.5 shrink-0">
-                    <span v-if="item.tagName" class="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded">{{ item.tagName }}</span>
-                    <span class="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded">{{ item.product }}</span>
-                    <span class="px-2 py-0.5 bg-secondary/10 text-secondary text-[10px] font-bold rounded">{{ item.category }}</span>
+                <div class="flex-1 min-w-0 grid grid-cols-12 gap-2 sm:gap-3 items-center">
+                  <div class="col-span-12 sm:col-span-4 flex flex-wrap items-center gap-1 shrink-0">
+                    <span v-if="item.tagName" class="px-2 py-0.5 bg-primary/10 text-primary text-[9px] font-bold rounded">{{ item.tagName }}</span>
+                    <span class="px-2 py-0.5 bg-primary/10 text-primary text-[9px] font-bold rounded">{{ item.product }}</span>
+                    <span class="px-2 py-0.5 bg-secondary/10 text-secondary text-[9px] font-bold rounded">{{ item.category }}</span>
                   </div>
                   <div class="col-span-12 sm:col-span-6 text-sm text-on-surface line-clamp-2 sm:truncate leading-relaxed">
                     {{ item.desc }}
                   </div>
-                  <div class="col-span-12 sm:col-span-2 flex flex-col items-end gap-2 shrink-0">
-                    <div class="flex items-center gap-1 border-b border-outline-variant/10 pb-1.5 w-full justify-end text-outline/30">
+                  <div class="col-span-12 sm:col-span-2 flex flex-col items-end gap-1 shrink-0">
+                    <div class="flex items-center gap-1 border-b border-outline-variant/10 pb-1 w-full justify-end text-outline/30">
                       <button
                         @click="addToShortcut(item)"
                         class="p-1 text-primary hover:bg-primary/10 rounded transition-colors flex items-center justify-center"
                         :title="item.isShortcut ? '已加入快捷登记' : '加入快捷登记'"
                       >
-                        <span class="material-symbols-outlined text-[17px] font-bold">{{ item.isShortcut ? 'bolt' : 'offline_bolt' }}</span>
+                        <span class="material-symbols-outlined text-[16px] font-bold">{{ item.isShortcut ? 'bolt' : 'offline_bolt' }}</span>
                       </button>
-                      <span class="text-[10px] select-none">/</span>
+                      <span class="text-[9px] select-none">/</span>
                       <button @click="editEntry(index)" :disabled="editingIndex === index" class="p-1 text-primary hover:bg-primary/10 rounded transition-colors disabled:opacity-40 flex items-center justify-center">
-                        <span class="material-symbols-outlined text-[15px]">edit</span>
+                        <span class="material-symbols-outlined text-[14px]">edit</span>
                       </button>
-                      <span class="text-[10px] select-none">/</span>
+                      <span class="text-[9px] select-none">/</span>
                       <button @click="removeEntry(index)" class="p-1 text-error hover:bg-error/10 rounded transition-colors flex items-center justify-center">
-                        <span class="material-symbols-outlined text-[15px]">delete</span>
+                        <span class="material-symbols-outlined text-[14px]">delete</span>
                       </button>
                     </div>
 
-                    <div class="flex flex-col gap-1 items-end">
+                    <div class="flex flex-col gap-0.5 items-end">
                       <span
                         :class="[
-                          'text-[10px] border rounded px-1.5 py-0.5 w-fit font-bold whitespace-nowrap',
+                          'text-[9px] border rounded px-1.5 py-0.5 w-fit font-bold whitespace-nowrap',
                           statusClassMap[item.status] || 'bg-slate-100 text-slate-600 border-slate-200'
                         ]"
                       >
                         {{ item.status }}
                       </span>
-                      <span class="text-xs font-bold text-primary font-mono bg-white px-2 py-0.5 rounded border border-outline-variant/10 shadow-sm whitespace-nowrap">
+                      <span class="text-[11px] font-bold text-primary font-mono bg-white px-1.5 py-0 rounded border border-outline-variant/10 shadow-sm whitespace-nowrap">
                         {{ Number(item.hours).toFixed(1) }}h
                       </span>
                     </div>
