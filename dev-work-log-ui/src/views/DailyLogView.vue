@@ -565,46 +565,48 @@ onMounted(async () => {
                   {{ entries.length - index }}
                 </div>
 
-                <div class="flex-1 min-w-0 grid grid-cols-12 gap-3 sm:gap-4 items-start sm:items-center">
-                  <div class="col-span-12 sm:col-span-3 flex flex-wrap items-center gap-1.5 shrink-0">
+                <div class="flex-1 min-w-0 grid grid-cols-12 gap-3 sm:gap-4 items-center">
+                  <div class="col-span-12 sm:col-span-4 flex flex-wrap items-center gap-1.5 shrink-0">
                     <span v-if="item.tagName" class="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded">{{ item.tagName }}</span>
                     <span class="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded">{{ item.product }}</span>
                     <span class="px-2 py-0.5 bg-secondary/10 text-secondary text-[10px] font-bold rounded">{{ item.category }}</span>
                   </div>
-                  <div class="col-span-12 sm:col-span-7 text-sm text-on-surface line-clamp-2 sm:truncate leading-relaxed">
+                  <div class="col-span-12 sm:col-span-6 text-sm text-on-surface line-clamp-2 sm:truncate leading-relaxed">
                     {{ item.desc }}
                   </div>
-                  <div class="col-span-12 sm:col-span-2 text-left sm:text-right">
-                    <div class="flex flex-col gap-1 sm:items-end">
+                  <div class="col-span-12 sm:col-span-2 flex flex-col items-end gap-2 shrink-0">
+                    <div class="flex items-center gap-1 border-b border-outline-variant/10 pb-1.5 w-full justify-end text-outline/30">
+                      <button
+                        @click="addToShortcut(item)"
+                        class="p-1 text-primary hover:bg-primary/10 rounded transition-colors flex items-center justify-center"
+                        :title="item.isShortcut ? '已加入快捷登记' : '加入快捷登记'"
+                      >
+                        <span class="material-symbols-outlined text-[17px] font-bold">{{ item.isShortcut ? 'bolt' : 'offline_bolt' }}</span>
+                      </button>
+                      <span class="text-[10px] select-none">/</span>
+                      <button @click="editEntry(index)" :disabled="editingIndex === index" class="p-1 text-primary hover:bg-primary/10 rounded transition-colors disabled:opacity-40 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-[15px]">edit</span>
+                      </button>
+                      <span class="text-[10px] select-none">/</span>
+                      <button @click="removeEntry(index)" class="p-1 text-error hover:bg-error/10 rounded transition-colors flex items-center justify-center">
+                        <span class="material-symbols-outlined text-[15px]">delete</span>
+                      </button>
+                    </div>
+
+                    <div class="flex flex-col gap-1 items-end">
                       <span
                         :class="[
-                          'text-[10px] border rounded px-1.5 py-0.5 w-fit font-medium',
+                          'text-[10px] border rounded px-1.5 py-0.5 w-fit font-bold whitespace-nowrap',
                           statusClassMap[item.status] || 'bg-slate-100 text-slate-600 border-slate-200'
                         ]"
                       >
                         {{ item.status }}
                       </span>
-                      <span class="text-sm font-bold text-primary font-mono bg-white px-2 py-0.5 rounded border border-outline-variant/10 shadow-sm">
+                      <span class="text-xs font-bold text-primary font-mono bg-white px-2 py-0.5 rounded border border-outline-variant/10 shadow-sm whitespace-nowrap">
                         {{ Number(item.hours).toFixed(1) }}h
                       </span>
                     </div>
                   </div>
-                </div>
-
-                <div class="flex items-center gap-1 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity justify-end border-t sm:border-t-0 border-outline-variant/10 pt-2 sm:pt-0 mt-2 sm:mt-0">
-                  <button
-                    @click="addToShortcut(item)"
-                    class="p-2 text-primary hover:bg-primary/10 rounded-md transition-colors flex items-center justify-center"
-                    :title="item.isShortcut ? '已加入快捷登记' : '加入快捷登记'"
-                  >
-                    <span class="material-symbols-outlined text-[18px]">{{ item.isShortcut ? 'bolt' : 'offline_bolt' }}</span>
-                  </button>
-                  <button @click="editEntry(index)" :disabled="editingIndex === index" class="p-2 text-primary hover:bg-primary/10 rounded-md transition-colors disabled:opacity-50 flex items-center justify-center">
-                    <span class="material-symbols-outlined text-[18px]">edit</span>
-                  </button>
-                  <button @click="removeEntry(index)" class="p-2 text-error hover:bg-error/10 rounded-md transition-colors flex items-center justify-center">
-                    <span class="material-symbols-outlined text-[18px]">delete</span>
-                  </button>
                 </div>
               </div>
             </div>
