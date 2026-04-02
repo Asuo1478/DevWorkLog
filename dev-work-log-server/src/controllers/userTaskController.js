@@ -102,9 +102,21 @@ const UserTaskController = {
     try {
       const keyword = req.query.keyword ? String(req.query.keyword).trim().toLowerCase() : '';
       const status = req.query.status ? String(req.query.status).trim() : null;
-      const userId = req.query.user_id ? Number(req.query.user_id) : null;
+      let userId = req.query.user_id ? Number(req.query.user_id) : null;
       const startDate = req.query.start_date ? String(req.query.start_date).trim() : null;
       const endDate = req.query.end_date ? String(req.query.end_date).trim() : null;
+
+      // 获取请求者身份 (从 Header 中获取，由前端注入)
+      const requesterId = req.get('x-user-id');
+      const requesterUsername = req.get('x-user-username');
+      const isAdmin = requesterUsername === 'jhtadmin';
+
+      // 权限分流：
+      // 1. 如果是管理员，可以通过传参过滤 userId，如果不传则看全部。
+      // 2. 如果不是管理员，强制只能看自己的数据，无视请求参数。
+      if (!isAdmin) {
+        userId = requesterId;
+      }
 
       const list = await sequelize.query(buildListSql(), {
         replacements: {
@@ -176,15 +188,47 @@ const UserTaskController = {
 
   createUserTask: async (req, res, next) => {
     try {
-      const payload = normalizePayload(req.body);
-      const validationError = validatePayload(payload);
+      const {
+        user_id,
+        tag_id,
+        year,
+        month,
+        week,
+        week_start_date,
+        week_end_date,
+        p_hours,
+        task_name,
+        task_content,
+        task_status
+      } = req.body;
 
-      if (validationError) {
-        return res.error(validationError, 400);
+      const requesterId = req.get('x-user-id');
+      const requesterUsername = req.get('x-user-username');
+      const isAdmin = requesterUsername === 'jhtadmin';
+
+      if (!isAdmin && String(user_id) !== String(requesterId)) {
+        return res.error('无权为其他用户创建周计划', 403);
       }
 
-      const created = await UserTask.create(payload);
-      res.success(created, '周计划创建成功');
+      if (!user_id || !year || !month || !week || !task_name) {
+        return res.error('必填项缺失', 400);
+      }
+
+      const task = await UserTask.create({
+        user_id,
+        tag_id: tag_id || null,
+        year,
+        month,
+        week,
+        week_start_date,
+        week_end_date,
+        p_hours: p_hours || 0,
+        task_name: task_name,
+        task_content: task_content || '',
+        task_status: task_status || '待启动'
+      });
+
+      res.success(task, '周计划创建成功');
     } catch (error) {
       next(error);
     }
@@ -193,21 +237,49 @@ const UserTaskController = {
   updateUserTask: async (req, res, next) => {
     try {
       const { id } = req.params;
-      const item = await UserTask.findByPk(id);
+      const task = await UserTask.findByPk(id);
 
-      if (!item) {
+      if (!task) {
         return res.error('周计划记录不存在', 404);
       }
 
-      const payload = normalizePayload(req.body);
-      const validationError = validatePayload(payload);
+      const requesterId = req.get('x-user-id');
+      const requesterUsername = req.get('x-user-username');
+      const isAdmin = requesterUsername === 'jhtadmin';
 
-      if (validationError) {
-        return res.error(validationError, 400);
+      if (!isAdmin && String(task.user_id) !== String(requesterId)) {
+        return res.error('无权更改他人的周计划', 403);
       }
 
-      await item.update(payload);
-      res.success(item, '周计划更新成功');
+      const {
+        tag_id,
+        year,
+        month,
+        week,
+        week_start_date,
+        week_end_date,
+        p_hours,
+        task_name,
+        task_content,
+        task_status,
+        completion_rate
+      } = req.body;
+
+      await task.update({
+        tag_id: tag_id !== undefined ? tag_id : task.tag_id,
+        year: year || task.year,
+        month: month || task.month,
+        week: week || task.week,
+        week_start_date: week_start_date || task.week_start_date,
+        week_end_date: week_end_date || task.week_end_date,
+        p_hours: p_hours !== undefined ? p_hours : task.p_hours,
+        task_name: task_name || task.task_name,
+        task_content: task_content !== undefined ? task_content : task.task_content,
+        task_status: task_status || task.task_status,
+        completion_rate: completion_rate !== undefined ? completion_rate : task.completion_rate
+      });
+
+      res.success(task, '周计划更新成功');
     } catch (error) {
       next(error);
     }
@@ -216,22 +288,29 @@ const UserTaskController = {
   updateUserTaskStatus: async (req, res, next) => {
     try {
       const { id } = req.params;
-      const { task_status } = req.body;
-      const item = await UserTask.findByPk(id);
+      const { status } = req.body;
+      const task = await UserTask.findByPk(id);
 
-      if (!item) {
+      if (!task) {
         return res.error('周计划记录不存在', 404);
       }
 
-      const nextStatus = String(task_status || '').trim();
-      if (!STATUS_OPTIONS.includes(nextStatus)) {
-        return res.error('状态值不合法', 400);
+      const requesterId = req.get('x-user-id');
+      const requesterUsername = req.get('x-user-username');
+      const isAdmin = requesterUsername === 'jhtadmin';
+
+      if (!isAdmin && String(task.user_id) !== String(requesterId)) {
+        return res.error('无权操作他人的周计划', 403);
       }
 
-      item.task_status = nextStatus;
-      await item.save();
+      if (status && !STATUS_OPTIONS.includes(status)) {
+        return res.error('不合法状态值', 400);
+      }
 
-      res.success(item, '周计划状态更新成功');
+      task.task_status = status;
+      await task.save();
+
+      res.success(task, '状态更新成功');
     } catch (error) {
       next(error);
     }
@@ -240,13 +319,22 @@ const UserTaskController = {
   deleteUserTask: async (req, res, next) => {
     try {
       const { id } = req.params;
-      const item = await UserTask.findByPk(id);
+      const task = await UserTask.findByPk(id);
 
-      if (!item) {
+      if (!task) {
         return res.error('周计划记录不存在', 404);
       }
 
-      await item.destroy();
+      // 安全校验
+      const requesterId = req.get('x-user-id');
+      const requesterUsername = req.get('x-user-username');
+      const isAdmin = requesterUsername === 'jhtadmin';
+
+      if (!isAdmin && String(task.user_id) !== String(requesterId)) {
+        return res.error('无权删除他人的周计划', 403);
+      }
+
+      await task.destroy();
       res.success(null, '周计划删除成功');
     } catch (error) {
       next(error);

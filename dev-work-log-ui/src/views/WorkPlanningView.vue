@@ -111,7 +111,12 @@ function formatNumber(value) {
 }
 
 function requestJson(url, options = {}) {
-  return fetch(url, options).then(async (response) => {
+  const headers = {
+    ...options.headers,
+    'x-user-id': authStore.user.id || '',
+    'x-user-username': authStore.user.identifier || ''
+  }
+  return fetch(url, { ...options, headers }).then(async (response) => {
     const json = await response.json()
     if (json.code !== 200) throw new Error(json.msg || '请求失败')
     return json.data
@@ -660,7 +665,11 @@ async function fetchWeeklyTasks() {
   weeklyTasksLoading.value = true
   try {
     const params = new URLSearchParams()
-    params.set('user_id', authStore.user.id || '')
+    // 管理员不传 user_id 以便查看全员任务；普通用户强制传本人 ID
+    if (!authStore.isAdmin) {
+      params.set('user_id', authStore.user.id || '')
+    }
+    
     if (keyword.value.trim()) params.set('keyword', keyword.value.trim())
     if (statusFilter.value !== '全部状态') params.set('status', statusFilter.value)
     if (Array.isArray(dateRange.value) && dateRange.value[0] && dateRange.value[1]) {
