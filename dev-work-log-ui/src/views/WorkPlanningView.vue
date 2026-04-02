@@ -764,20 +764,14 @@ onMounted(() => {
                 :class="['rounded-2xl bg-surface-container-lowest border border-outline-variant/10 shadow-sm overflow-hidden', activeTagCardCount <= 4 ? 'min-w-0' : 'w-[320px] shrink-0']"
               >
                 <div class="px-5 py-4 border-b border-outline-variant/10">
-                  <div class="flex justify-between items-start gap-6">
-                    <div class="min-w-0 flex-1">
-                      <div class="flex flex-wrap items-center gap-2">
-                        <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-primary/10 text-primary">{{ tag.goal_name }}</span>
-                      </div>
-                      <h5 class="mt-3 text-[18px] font-bold text-on-surface whitespace-nowrap overflow-hidden text-ellipsis">{{ tag.tag_name }}</h5>
-                    </div>
-                    <div class="flex flex-col items-end gap-2 text-right shrink-0">
-                      <button type="button" @click="openTaskPlanning(tag)" class="inline-flex items-center gap-1 rounded-full border border-primary/15 bg-primary/10 px-2.5 py-1 text-[11px] font-bold text-primary transition-colors hover:bg-primary/15">
-                        <span class="material-symbols-outlined text-[14px]">assignment_add</span>
-                        <span>制定计划</span>
-                      </button>
-                    </div>
+                  <div class="flex justify-between items-center gap-4">
+                    <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-primary/10 text-primary truncate max-w-[60%]">{{ tag.goal_name }}</span>
+                    <button type="button" @click="openTaskPlanning(tag)" class="inline-flex items-center gap-1 rounded-full border border-primary/15 bg-primary/10 px-2.5 py-1 text-[11px] font-bold text-primary transition-colors hover:bg-primary/15 shrink-0">
+                      <span class="material-symbols-outlined text-[14px]">assignment_add</span>
+                      <span>制定计划</span>
+                    </button>
                   </div>
+                  <h5 class="mt-4 text-[18px] font-bold text-on-surface line-clamp-2 leading-snug" :title="tag.tag_name">{{ tag.tag_name }}</h5>
                   <div class="mt-3">
                     <p class="text-sm font-medium text-on-surface-variant whitespace-nowrap overflow-hidden text-ellipsis">起止时间：{{ tag.start_date }} 至 {{ tag.end_date }}</p>
                   </div>
@@ -878,30 +872,24 @@ onMounted(() => {
         <div v-else-if="projectTags.length" class="grid grid-cols-1 xl:grid-cols-2 gap-5">
           <div v-for="project in projectTags" :key="project.tag_id" @dblclick="openProjectDetail(project)" class="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 shadow-sm overflow-hidden cursor-default">
             <div class="px-5 py-4 border-b border-outline-variant/10">
-              <div class="flex justify-between items-start gap-6">
-                <div class="min-w-0 flex-1">
-                  <div class="flex flex-wrap items-center gap-2">
-                    <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-primary/10 text-primary">{{ project.goal_name }}</span>
-                  </div>
-                  <h5 class="mt-3 text-[18px] font-bold text-on-surface whitespace-nowrap overflow-hidden text-ellipsis">{{ project.tag_name }}</h5>
-                </div>
-
-                <div class="flex flex-col items-end gap-2 text-right shrink-0">
-                  <div class="flex items-center gap-2">
-                    <button type="button" @click.stop="openProjectEdit(project)" class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant hover:bg-primary/10 hover:text-primary transition-colors" title="编辑">
-                      <span class="material-symbols-outlined text-[18px]">edit</span>
-                    </button>
-                    <button type="button" @click.stop="openProjectDelete(project)" class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant hover:bg-error/10 hover:text-error transition-colors" title="删除">
-                      <span class="material-symbols-outlined text-[18px]">delete</span>
-                    </button>
-                    <select :value="project.status" @click.stop @change="changeProjectStatus(project, $event.target.value)" :class="['px-3 py-1 rounded-full text-[11px] font-bold border outline-none appearance-none cursor-pointer', getProjectStatusClass(project.status)]">
-                      <option v-for="status in projectStatusOptions" :key="status" :value="status">{{ status }}</option>
-                    </select>
-                  </div>
-                  <p class="text-sm font-medium text-on-surface-variant whitespace-nowrap">起止时间：{{ project.start_date }} 至 {{ project.end_date }}</p>
+              <div class="flex justify-between items-center gap-4">
+                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-primary/10 text-primary truncate max-w-[40%]">{{ project.goal_name }}</span>
+                <div class="flex items-center gap-2 shrink-0">
+                  <button type="button" @click.stop="openProjectEdit(project)" class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant hover:bg-primary/10 hover:text-primary transition-colors" title="编辑">
+                    <span class="material-symbols-outlined text-[18px]">edit</span>
+                  </button>
+                  <button type="button" @click.stop="openProjectDelete(project)" class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant hover:bg-error/10 hover:text-error transition-colors" title="删除">
+                    <span class="material-symbols-outlined text-[18px]">delete</span>
+                  </button>
+                  <select :value="project.status" @click.stop @change="changeProjectStatus(project, $event.target.value)" :class="['px-3 py-1 rounded-full text-[11px] font-bold border outline-none appearance-none cursor-pointer', getProjectStatusClass(project.status)]">
+                    <option v-for="status in projectStatusOptions" :key="status" :value="status">{{ status }}</option>
+                  </select>
                 </div>
               </div>
-
+              <h5 class="mt-4 text-[18px] font-bold text-on-surface line-clamp-2 leading-snug" :title="project.tag_name">{{ project.tag_name }}</h5>
+              <div class="mt-3">
+                <p class="text-sm font-medium text-on-surface-variant truncate">起止时间：{{ project.start_date }} 至 {{ project.end_date }}</p>
+              </div>
               <div class="mt-3 w-full">
                 <p class="max-w-full overflow-hidden text-ellipsis text-sm leading-7 text-on-surface-variant line-clamp-2 break-all min-h-[56px]">{{ project.tag_desc || '-' }}</p>
               </div>
