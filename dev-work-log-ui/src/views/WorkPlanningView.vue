@@ -602,7 +602,7 @@ async function changeTaskStatus(task, nextStatus) {
     await requestJson(`/api/v1/user-tasks/${task.task_id}/status`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ task_status: nextStatus })
+      body: JSON.stringify({ status: nextStatus })
     })
   } catch (error) {
     task.task_status = previousStatus
