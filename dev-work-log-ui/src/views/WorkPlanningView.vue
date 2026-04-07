@@ -24,7 +24,7 @@ const projectDialogVisible = ref(false)
 const projectDialogMode = ref('create')
 const projectDetailVisible = ref(false)
 const projectDeleteVisible = ref(false)
-const projectDeleteResultVisible = ref(false)
+const planningNoticeVisible = ref(false)
 
 const taskDialogVisible = ref(false)
 const taskDialogMode = ref('create')
@@ -38,8 +38,8 @@ const referenceGoal = ref(null)
 const referenceTag = ref(null)
 const projectStatusTouched = ref(false)
 const taskStatusTouched = ref(false)
-const projectDeleteResultTitle = ref('')
-const projectDeleteResultMessage = ref('')
+const planningNoticeTitle = ref('')
+const planningNoticeMessage = ref('')
 
 const projectForm = reactive({
   tag_name: '',
@@ -387,10 +387,10 @@ function onTaskStartDateChange() {
   if (!taskStatusTouched.value) taskForm.task_status = autoTaskStatusByStartDate()
 }
 
-function openProjectDeleteResult(title, message) {
-  projectDeleteResultTitle.value = title
-  projectDeleteResultMessage.value = message
-  projectDeleteResultVisible.value = true
+function openPlanningNotice(title, message) {
+  planningNoticeTitle.value = title
+  planningNoticeMessage.value = message
+  planningNoticeVisible.value = true
 }
 
 function openGoalPlanning(goal) {
@@ -470,9 +470,9 @@ async function openProjectDelete(project) {
       projectDeleteVisible.value = true
       return
     }
-    openProjectDeleteResult('删除项目&任务', data.message || '该项目&任务已经实际启动，不允许删除。')
+    openPlanningNotice('删除项目&任务', data.message || '该项目&任务已经实际启动，不允许删除。')
   } catch (error) {
-    openProjectDeleteResult('删除项目&任务', error.message || '删除校验失败')
+    openPlanningNotice('删除项目&任务', error.message || '删除校验失败')
   }
 }
 
@@ -589,6 +589,7 @@ async function changeProjectStatus(project, nextStatus) {
       body: JSON.stringify({ status: nextStatus, update_by: authStore.user.id || null })
     })
     await fetchActiveTagCards()
+    openPlanningNotice('状态更新', `已将项目&任务状态更新为「${nextStatus}」。`)
   } catch (error) {
     project.status = previousStatus
     alert(error.message || '状态更新失败')
@@ -604,6 +605,8 @@ async function changeTaskStatus(task, nextStatus) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: nextStatus })
     })
+    await fetchWeeklyTasks()
+    openPlanningNotice('状态更新', `已将周计划状态更新为「${nextStatus}」。`)
   } catch (error) {
     task.task_status = previousStatus
     alert(error.message || '状态更新失败')
@@ -1126,12 +1129,12 @@ onMounted(() => {
       </div>
     </div>
 
-    <div v-if="projectDeleteResultVisible" class="fixed inset-0 z-[70] flex items-center justify-center p-4">
-      <div class="absolute inset-0 bg-black/35 backdrop-blur-[1px]" @click="projectDeleteResultVisible = false"></div>
+    <div v-if="planningNoticeVisible" class="fixed inset-0 z-[70] flex items-center justify-center p-4">
+      <div class="absolute inset-0 bg-black/35 backdrop-blur-[1px]" @click="planningNoticeVisible = false"></div>
       <div class="relative w-full max-w-[560px] rounded-[28px] bg-white shadow-2xl overflow-hidden">
-        <div class="px-10 pt-10 pb-8"><h3 class="text-[18px] font-bold text-[#c81e1e]">{{ projectDeleteResultTitle }}</h3><p class="mt-6 text-[15px] leading-7 text-on-surface-variant">{{ projectDeleteResultMessage }}</p></div>
+        <div class="px-10 pt-10 pb-8"><h3 class="text-[18px] font-bold text-[#c81e1e]">{{ planningNoticeTitle }}</h3><p class="mt-6 text-[15px] leading-7 text-on-surface-variant">{{ planningNoticeMessage }}</p></div>
         <div class="px-10 pb-8 flex justify-end">
-          <button @click="projectDeleteResultVisible = false" class="min-w-[108px] rounded-[18px] bg-surface-container-low px-6 py-3 text-[15px] font-bold text-on-surface-variant hover:bg-surface-container">知道了</button>
+          <button @click="planningNoticeVisible = false" class="min-w-[108px] rounded-[18px] bg-surface-container-low px-6 py-3 text-[15px] font-bold text-on-surface-variant hover:bg-surface-container">知道了</button>
         </div>
       </div>
     </div>
